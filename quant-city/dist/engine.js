@@ -19,7 +19,7 @@
       color: "#9eabff",
       file: "01_ai_assistant.png",
       dimension: "信息研究偏好",
-      hint: "完成“先查数据”类决策，解锁研究院和因子研究。",
+      hint: "习惯先查数据、换一段行情验证，再决定策略能不能继续使用。",
     },
     {
       id: "risk",
@@ -29,7 +29,7 @@
       color: "#76e3cd",
       file: "02_risk_officer.png",
       dimension: "稳健防守偏好",
-      hint: "完成“暂不买入”类决策，解锁防守园和仓位管理。",
+      hint: "习惯先控制最坏结果，保留现金，不会因为怕错过就重仓。",
     },
     {
       id: "tech",
@@ -39,7 +39,7 @@
       color: "#ffb57b",
       file: "03_trader.png",
       dimension: "趋势跟随偏好",
-      hint: "完成“全额买入”类决策，解锁趋势港和动量工具。",
+      hint: "关注价格有没有形成方向，同时会先写清楚退出规则。",
     },
     {
       id: "finance",
@@ -49,7 +49,7 @@
       color: "#dfc1ff",
       file: "04_research_mentor.png",
       dimension: "价值低吸偏好",
-      hint: "完成“小额试仓”类决策，解锁价值街和估值因子。",
+      hint: "习惯先判断东西值不值，再用小仓位分批验证。",
     },
   ];
   const families = [
@@ -205,6 +205,7 @@
       chats: [],
       affection: { ai: 0, risk: 0, tech: 0, finance: 0 },
       partnerTalks: {},
+      sceneInteractions: {},
       npc: 0,
       prompted: [],
       resourceFeedback: [],

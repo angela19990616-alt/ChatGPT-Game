@@ -67,6 +67,7 @@
     if (!state) return state;
     state.affection ||= { ai: 0, risk: 0, tech: 0, finance: 0 };
     state.partnerTalks ||= {};
+    state.sceneInteractions ||= {};
     for (const p of G.people) state.affection[p.id] ??= 0;
     const enrich = (event) => {
       if (!event || event.strategy) return;
@@ -112,6 +113,45 @@
     if (s) GameCity.init(s);
     return `<div class="game-world">${CityArt.map(s, { interactive })}<div class="vignette"></div></div>`;
   }
+  function bindCityPan() {
+    const map = $(".city-game .world");
+    if (!map || !window.matchMedia?.("(max-width: 700px)").matches) return;
+    let startX = 0, startY = 0, originX = 0, originY = 0, moved = false, activePointer = null;
+    const clamp = (min, max, value) => Math.max(min, Math.min(max, value));
+    map.addEventListener("pointerdown", (event) => {
+      startX = event.clientX;
+      startY = event.clientY;
+      originX = Number(map.dataset.panX || 0);
+      originY = Number(map.dataset.panY || 0);
+      moved = false;
+      activePointer = event.pointerId;
+      map.setPointerCapture?.(event.pointerId);
+    });
+    map.addEventListener("pointermove", (event) => {
+      if (activePointer !== event.pointerId) return;
+      const dx = event.clientX - startX, dy = event.clientY - startY;
+      if (Math.hypot(dx, dy) < 7) return;
+      moved = true;
+      const x = clamp(-75, 75, originX + dx), y = clamp(-105, 105, originY + dy);
+      map.dataset.panX = x;
+      map.dataset.panY = y;
+      map.style.setProperty("--pan-x", x + "px");
+      map.style.setProperty("--pan-y", y + "px");
+    });
+    const stopPan = (event) => {
+      if (activePointer !== event.pointerId) return;
+      map.releasePointerCapture?.(event.pointerId);
+      activePointer = null;
+    };
+    map.addEventListener("pointerup", stopPan);
+    map.addEventListener("pointercancel", stopPan);
+    map.addEventListener("click", (event) => {
+      if (!moved) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      moved = false;
+    }, true);
+  }
   function character(p = G.people[0]) {
     return `<div class="vn-character">${art(p, "large-portrait")}</div>`;
   }
@@ -155,8 +195,13 @@
     const e = s.event,
       addr = "董事长";
     if (!e) return `${addr}，${p.hint} 你的第一张命运卡已经送达。`;
-    const lead = [`${addr}，先区分已知规则和未知叙事。`, `${addr}，我不会替你决定，但会守住风险边界。`, `${addr}，漂亮曲线不是证据。我们需要能复现的检验。`, `${addr}，资金的去处，必须有清晰的理由。`][s.npc];
-    return lead + " " + p.hint;
+    const lens = {
+      ai: `我会先问：这条${e.strategyName}信号换一段时间还能不能成立？`,
+      risk: `我先看坏结果：这次最多会损失多少，退出条件是什么？`,
+      tech: `方向值得关注，但别因为怕错过就重仓，先用小仓验证。`,
+      finance: `先看价格背后的原因，再决定它是真的便宜，还是情况正在变坏。`,
+    }[p.id];
+    return `${addr}，今天由我陪你处理这封来信。${lens}`;
   }
   function render() {
     if (!s) return intro();
@@ -169,6 +214,7 @@
     const p = G.people[s.npc],
       last = [...s.chats].reverse().find((c) => c.npc === s.npc && c.round === s.round),
       tutorial = s.tutorial && s.tutorial !== "done",
+      sceneResponded = Boolean(s.sceneInteractions?.[s.event?.id]),
       attr = {
         trend: "趋势",
         value: "价值",
@@ -176,7 +222,7 @@
         research: "研究",
       }[s.ledger.at(-1)?.attribute],
       tutorialCopy = s.tutorial === "briefing" ? `<b>先记住三件事：</b><br>① 每天处理 3 份市场来信，自己决定投多少，也可以不投或先查资料。<br>② 抽蓝图建总部，装上策略卡让大楼继续长高。<br>③ 第 4 天会根据选择、知识题和角色互动，给出职业画像。<br><small>这是模拟经营游戏，不构成真实投资建议。</small>` : `第一封市场来信到了。<br>${s.phase === "event" ? "先看可能会赚多少、亏多少，再选投入、不投或先查资料。" : "点卡片，看看今天发生了什么。"}`;
-    app.innerHTML = `<main class="game event-game">${world()}${hud()}${tutorial ? '<button class="tutorial-skip" data-do="skipTutorial">跳过教程</button>' : ""}<div class="event-shade"></div>${character(p)}${!tutorial ? `<button class="backcity" data-do="city">‹ 返回城市</button><div class="partner-switch">${G.people.map((p, i) => `<button data-do="npc" data-id="${i}" class="${s.npc === i ? "selected" : ""}" aria-label="切换到${p.name}">${art(p, "partner-face")}</button>`).join("")}</div>` : ""}${eventPanel()}${speech(s.phase === "result" ? `<b>${attr} +1</b><br>这次选择记下了。` : tutorial ? tutorialCopy : last ? esc(last.text) : dialogue(p), s.tutorial === "briefing" ? '<button class="primary" data-do="startTutorial">明白了，打开第一封市场来信 →</button>' : s.phase === "result" ? `<button class="primary" data-do="${tutorial ? "tutorialReward" : "next"}">${tutorial ? "领取开城物资" : s.round === G.CONFIG.rounds - 1 ? "看最终画像" : (s.round + 1) % G.CONFIG.roundsPerDay === 0 ? "结束今天" : "下一轮"} →</button>` : s.phase === "ready" || s.phase === "drawing" ? "" : `<div class="hintrow"><button data-do="ask" data-kind="risk">问风险</button><button data-do="ask" data-kind="tech">问依据</button><button data-do="ask" data-kind="finance">问费用</button><button data-do="lesson">没听懂</button></div>${tutorial ? "" : `<form id="chat" class="chatrow"><input id="message" maxlength="250" aria-label="和角色讨论" placeholder="说说你的想法…"><button type="submit">发送</button></form>`}`, p)}${foot()}</main>`;
+    app.innerHTML = `<main class="game event-game">${world()}${hud()}${tutorial ? '<button class="tutorial-skip" data-do="skipTutorial">跳过教程</button>' : ""}<div class="event-shade"></div>${character(p)}${!tutorial ? `<button class="backcity" data-do="city">‹ 返回城市</button><div class="partner-switch">${G.people.map((p, i) => `<button data-do="npc" data-id="${i}" class="${s.npc === i ? "selected" : ""}" aria-label="切换到${p.name}">${art(p, "partner-face")}</button>`).join("")}</div>` : ""}${eventPanel()}${speech(s.phase === "result" ? `<b>${attr} +1</b><br>这次选择记下了。` : tutorial ? tutorialCopy : last ? esc(last.text) : dialogue(p), s.tutorial === "briefing" ? '<button class="primary" data-do="startTutorial">明白了，打开第一封市场来信 →</button>' : s.phase === "result" ? `<button class="primary" data-do="${tutorial ? "tutorialReward" : "next"}">${tutorial ? "领取开城物资" : s.round === G.CONFIG.rounds - 1 ? "看最终画像" : (s.round + 1) % G.CONFIG.roundsPerDay === 0 ? "结束今天" : "下一轮"} →</button>` : s.phase === "ready" || s.phase === "drawing" ? "" : `<div class="hintrow"><button data-do="ask" data-kind="risk">问风险</button><button data-do="ask" data-kind="tech">问依据</button><button data-do="ask" data-kind="finance">问费用</button><button data-do="lesson">没听懂</button>${tutorial ? "" : `<button data-do="sceneAgree" ${sceneResponded ? "disabled" : ""}>${sceneResponded ? "已回应" : "认可 +1"}</button>`}</div>${tutorial ? "" : `<form id="chat" class="chatrow"><input id="message" maxlength="250" aria-label="和角色讨论" placeholder="说说你的想法…"><button type="submit">发送</button></form>`}`, p)}${foot()}</main>`;
     if ($("#chat"))
       $("#chat").onsubmit = (e) => {
         e.preventDefault();
@@ -185,31 +231,35 @@
   }
 
   function reportFor(day) {
-    const rows = s.ledger.filter((x) => Math.floor(Number(x.eventId.match(/e(\d+)$/)?.[1] || 0) / 3) + 1 === day),
+    const season = s.season || 1,
+      rows = s.ledger.filter((x) => x.eventId.includes(`-s${season}-e`) && Math.floor(Number(x.eventId.match(/e(\d+)$/)?.[1] || 0) / 3) + 1 === day),
       invested = rows.reduce((n, x) => n + x.amount, 0),
       fees = rows.reduce((n, x) => n + x.fee + x.report, 0),
       income = rows.reduce((n, x) => n + x.credit, 0),
-      net = income - invested - fees;
-    return { rows, invested, fees, income, net };
+      cityRows = (s.city?.ledger || []).filter((x) => (x.season || 1) === (s.season || 1) && x.gameDay === day),
+      cityIncome = cityRows.reduce((n, x) => n + x.delta, 0),
+      net = income + cityIncome - invested - fees;
+    return { rows, invested, fees, income, cityIncome, net };
   }
   function reportBody(day) {
     const r = reportFor(day),
       names = {
-        full: "大笔跟进",
-        small: "半价试买",
+        full: "投入较多",
+        small: "小额试投",
         skip: "先不买",
         report: "花钱调查",
         custom: "自定金额",
       };
-    return `<div class="numbers"><div><small>投入</small><strong>${r.invested}</strong></div><div><small>收入/返还</small><strong>${r.income}</strong></div><div><small>净收入</small><strong class="${r.net >= 0 ? "positive" : "negative"}">${r.net >= 0 ? "+" : ""}${r.net}</strong></div></div><p><b>费用：</b>${r.fees} 币</p><h3>董事长昨日决策</h3>${r.rows.map((x, i) => `<div class="ledgeritem">第 ${i + 1} 轮 · ${names[x.actionId] || x.actionId} · ${x.attribute} +1<br><small>投入 ${x.amount} / 返还 ${x.credit} / 净收入 ${x.delta >= 0 ? "+" : ""}${x.delta}</small></div>`).join("")}`;
+    return `<section class="daily-report"><h2>第 ${day} 天</h2><div class="numbers"><div><small>市场投入</small><strong>${r.invested}</strong></div><div><small>市场返还</small><strong>${r.income}</strong></div><div><small>总部经营</small><strong>+${r.cityIncome}</strong></div><div><small>当日净变化</small><strong class="${r.net >= 0 ? "positive" : "negative"}">${r.net >= 0 ? "+" : ""}${r.net}</strong></div></div><p><b>费用：</b>${r.fees} 币</p><h3>当天三次决定</h3>${r.rows.map((x, i) => `<div class="ledgeritem">第 ${i + 1} 轮 · ${names[x.actionId] || x.actionId} · ${x.attribute} +1<br><small>投入 ${x.amount} / 返还 ${x.credit} / 净变化 ${x.delta >= 0 ? "+" : ""}${x.delta}</small></div>`).join("") || '<p class="muted">当天没有市场决策记录。</p>'}</section>`;
   }
   function daybreak() {
     const day = Math.floor(s.round / G.CONFIG.roundsPerDay) + 1;
-    app.innerHTML = `<main class="game opening daybreak">${world()}<div class="opening-shade"></div>${character()}${speech(`<b>第 ${day} 天 · 昨日财报</b>${reportBody(day - 1)}<div class="notice">今天仍可自由决定每轮投多少；可用现金不足时，可以少投、先查资料或不投。</div>`, `<button class="primary" data-do="startDay">确认财报并进入第 ${day} 天 →</button>`)}${foot()}</main>`;
+    G.resolveDue(s, day);
+    app.innerHTML = `<main class="game opening daybreak">${world()}<div class="opening-shade"></div>${character()}${speech(`<b>第 ${day} 天 · 昨日财报</b>${reportBody(day - 1)}<div class="notice"><b>当前可用现金：${s.balance.toLocaleString()} 币</b><br>昨天投入的市场资金已经结算进余额。今天仍可少投、先查资料或不投。</div>`, `<button class="primary" data-do="startDay">确认财报并进入第 ${day} 天 →</button>`)}${foot()}</main>`;
     save();
   }
   function finalReport() {
-    app.innerHTML = `<div class="shell">${header()}<main class="summary"><div class="eyebrow">第 4 天 · 最终结算</div><h1>三日经营财报</h1>${reportBody(3)}<div class="panel"><h2>三天总结果</h2><p>期初 ${s.initial.toLocaleString()} 币 → 期末 ${s.balance.toLocaleString()} 币，累计净收入 <b class="${s.balance - s.initial >= 0 ? "positive" : "negative"}">${s.balance - s.initial >= 0 ? "+" : ""}${s.balance - s.initial}</b> 币。</p></div><button class="primary" data-do="finalProfile">看我的策略画像 →</button></main>${foot()}</div>`;
+    app.innerHTML = `<div class="shell">${header()}<main class="summary"><div class="eyebrow">第 4 天 · 最终结算</div><h1>三日经营财报</h1>${[1, 2, 3].map(reportBody).join("")}<div class="panel"><h2>三天总结果</h2><p>期初 ${s.initial.toLocaleString()} 币 → 期末 ${s.balance.toLocaleString()} 币，累计资产变化 <b class="${s.balance - s.initial >= 0 ? "positive" : "negative"}">${s.balance - s.initial >= 0 ? "+" : ""}${s.balance - s.initial}</b> 币。</p><small>总变化包含市场盈亏、交易费用、总部建设投入和总部经营收入，所以不等于只把市场净变化相加。</small></div><button class="primary" data-do="finalProfile">看我的策略画像 →</button></main>${foot()}</div>`;
     save();
   }
 
@@ -546,7 +596,7 @@
   function districtChallenge(id) {
     const b = GameCity.blueprints.find((x) => x.id === id),
       q = districtQuiz[id];
-    open("解锁 " + b.name, `<div class="eyebrow">建设前知识题 · 可重试</div><h3>${q.question}</h3><div class="choices">${q.answers.map((a, i) => `<button data-do="districtAnswer" data-id="${id}" data-value="${i}">${a}</button>`).join("")}</div><p class="muted">答题用于区分知识熟悉度，不影响你的策略偏好分。</p>`);
+    open("进入 " + b.name + " 前的小测", `<div class="eyebrow">一道题 · 答错可以重试</div><h3>${q.question}</h3><div class="choices">${q.answers.map((a, i) => `<button data-do="districtAnswer" data-id="${id}" data-value="${i}">${a}</button>`).join("")}</div><p class="muted">这道题只记录知识熟悉度，不影响你的策略偏好。</p>`);
   }
   function lesson(concept) {
     concept = concept || s?.event?.concept || "交易成本";
@@ -829,7 +879,7 @@
           save();
           modal.close();
           city();
-          toast("区域蓝图已落地，等待领取建设收益。");
+          toast("总部建设完成，等待领取经营收益。");
           break;
         }
         case "cityBudget": {
@@ -957,6 +1007,20 @@
           save();
           partnerDetail(index);
           toast(answer.delta > 0 ? `${p.name}好感 +${answer.delta}` : answer.delta < 0 ? `${p.name}好感 ${answer.delta}` : "本次好感不变");
+          break;
+        }
+        case "sceneAgree": {
+          if (!s.event || s.sceneInteractions?.[s.event.id]) break;
+          const p = G.people[s.npc];
+          s.sceneInteractions ||= {};
+          s.affection ||= { ai: 0, risk: 0, tech: 0, finance: 0 };
+          s.sceneInteractions[s.event.id] = { partner: p.id, round: s.round, delta: 1 };
+          s.affection[p.id] = Math.min(30, (s.affection[p.id] || 0) + 1);
+          G.evidence(s, "bond", `scene:${p.id}:+1`, "partner_interaction", "during", false, s.event.id);
+          s.profileVersion++;
+          say(`我认可${p.name}这次的判断方式，先把理由记下来再行动。`);
+          render();
+          toast(`${p.name}好感 +1`);
           break;
         }
         case "profile":
@@ -1196,6 +1260,11 @@
       targetBlueprint = GameCity.blueprints.find((b) => b.id === target),
       feedback = c.feedback ? `<aside class="city-feedback"><b>${esc(c.feedback.title)}</b><p>${esc(c.feedback.text)}</p><button class="small" data-do="dismissFeedback">知道了</button></aside>` : "";
     app.innerHTML = `<main class="game city-game ${s.tutorial === "build" ? "tutorial-build tutorial-" + target : ""}">${world(!t || s.tutorial === "build")}${hud()}${t ? '<button class="tutorial-skip" data-do="skipTutorial">跳过教程</button>' : ""}${s.tutorial === "build" ? `<div class="tutorial-banner">你刚才选了${targetBlueprint.strategy}决策。现在建立对应总部。<span>↓</span></div><div class="tutorial-objective">落成${targetBlueprint.name} · 集团版图 +1</div>` : s.tutorial === "finish" ? `${character()}${speech(`${targetBlueprint.name}总部落成。<br>${esc(c.feedback?.text || targetBlueprint.strategy + " +1。")}`, '<button class="primary" data-do="finishTutorial">继续扩张 →</button>')}` : `<div class="island-name">ANGELA CAPITAL<small>董事长总部 · ${c.districts.length} / 4 栋战略大楼已落成</small></div><button class="mail-float" data-do="board" aria-label="打开商业情报">${CityArt.icon("cards")}<i></i></button>${dock()}${feedback}`}<div class="ambient-leaf leaf1"></div><div class="ambient-leaf leaf2"></div>${foot()}</main>`;
+    if (s.tutorial === "build") {
+      $(".tutorial-banner").innerHTML = `<b>下一步：建第一栋总部</b><br>地图已经标出与你刚才选择相符的位置。<span>↓</span>`;
+      $(".tutorial-objective").textContent = "点击发光地块，投入任意金额完成建设";
+    }
+    bindCityPan();
     save();
   }
   function cardHall() {
@@ -1207,7 +1276,7 @@
       factor = c.drawn["factor" + prefix + day],
       types = GameCity.blueprints.map((b) => `<span><b>${b.name}</b><small>${b.partner}</small></span>`).join(""),
       materials = GameCity.factors.map((f) => `<span><b>${f.name}</b><small>${f.label}</small></span>`).join("");
-    open("第 " + season + " 赛季 · 第 " + day + " 天补给站", `<p class="muted">新手记住两件事：蓝图卡用来解锁一块地；策略卡用来给楼增加一层。每天各抽 1 张。</p><div class="strategy-link-grid">${types}</div><div class="poolselection"><button class="pool-card" data-do="board"><span>✦</span><b>市场决策</b><small>${s.round % 3}/3 已完成</small></button><button class="pool-card blueprint-pool" data-do="drawPool" data-id="strategy" ${strategy ? "disabled" : ""}><span>${CityArt.icon("blueprint")}</span><b>抽区域蓝图</b><small>${strategy ? "今天抽过了" : "抽到后才能在对应区域建楼"}</small></button><button class="pool-card materials-pool" data-do="drawPool" data-id="factor" ${factor ? "disabled" : ""}><span>${CityArt.icon("cards")}</span><b>抽策略卡</b><small>${factor ? "今天抽过了" : "每张卡就是一层策略楼"}</small></button></div><details><summary>查看策略卡分类</summary><div class="strategy-link-grid materials">${materials}</div></details>`);
+    open("第 " + season + " 赛季 · 第 " + day + " 天董事会", `<p class="muted">今天可以处理市场来信，也可以各抽一次总部地契和策略方案。地契决定能建哪栋楼，策略方案决定楼里运行什么。</p><div class="strategy-link-grid">${types}</div><div class="poolselection"><button class="pool-card" data-do="board"><span>✦</span><b>处理市场来信</b><small>${s.round % 3}/3 已完成</small></button><button class="pool-card blueprint-pool" data-do="drawPool" data-id="strategy" ${strategy ? "disabled" : ""}><span>${CityArt.icon("blueprint")}</span><b>抽总部地契</b><small>${strategy ? "今天已经抽过" : "获得一栋新总部的建设资格"}</small></button><button class="pool-card materials-pool" data-do="drawPool" data-id="factor" ${factor ? "disabled" : ""}><span>${CityArt.icon("cards")}</span><b>抽策略方案</b><small>${factor ? "今天已经抽过" : "安装后为对应总部增加一层"}</small></button></div><details><summary>四类策略方案有什么区别？</summary><div class="strategy-link-grid materials">${materials}</div></details>`);
   }
   function drawPool(pool) {
     if (poolLoot) return;
@@ -1215,7 +1284,7 @@
       rarity = s.city.draws.at(-1).rarity;
     save();
     poolLoot = { pool, item, rarity };
-    open("补给抵港", `<div class="pool-spin-stage"><button class="sealedcard poolspin ${pool} rarity-${rarity.toLowerCase()}" data-do="poolReveal"><span class="rarity-badge">${rarity}</span><span class="seal">✦</span><b>${pool === "strategy" ? "区域蓝图" : "策略卡"}</b><small>点击跳过演出</small></button></div>`);
+    open("董事会抽取", `<div class="pool-spin-stage"><button class="sealedcard poolspin ${pool} rarity-${rarity.toLowerCase()}" data-do="poolReveal"><span class="rarity-badge">${rarity}</span><span class="seal">✦</span><b>${pool === "strategy" ? "总部地契" : "策略方案"}</b><small>点击立即揭晓</small></button></div>`);
     poolTimer = setTimeout(poolReveal, window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? 40 : 2400);
   }
   function poolReveal() {
@@ -1226,7 +1295,7 @@
     const clean = item.replace(/ × 2$/, ""),
       bp = GameCity.blueprints.find((x) => item.includes(x.name)),
       factor = GameCity.factors.find((x) => clean === x.name),
-      explain = bp ? `${bp.strategy}产业：${bp.description} 建成后对应属性 +1。` : factor ? `${factor.label}：${factor.description} 安装到对应大楼后，就会新增一层。` : "四个区域蓝图已经集齐，所以改送一张补充策略卡。";
+      explain = bp ? `${bp.name}：${bp.description} 拿到地契后可以投资建设。` : factor ? `${factor.label}：${factor.description} 安装到对应总部后会新增一层。` : "四栋总部的地契已经集齐，本次改送一张补充策略方案。";
     open(rarity + " 抽到了", `<div class="loot-reveal rarity-${rarity.toLowerCase()}"><div class="loot-icon">${CityArt.icon(pool === "strategy" ? "blueprint" : "wood")}</div><h3>${item}</h3><p>${esc(explain)}</p><small>已放进仓库 · 今天不能再抽同类卡</small><button class="primary" data-do="close">收下</button></div>`);
   }
   function warehouse() {
@@ -1356,9 +1425,14 @@
     clearTimeout(drawTimer);
     s.phase = "event";
     if (!s.event) G.draw(s);
-    if (s.event?.lead) {
-      const lead = G.people.findIndex((p) => p.id === s.event.lead);
-      if (lead >= 0) s.npc = lead;
+    if (s.event && !Number.isInteger(s.event.sceneNpc)) {
+      let picked = Math.floor(G.rand(s.event.seed + 4242) * G.people.length);
+      if (G.people.length > 1 && picked === s.lastSceneNpc) picked = (picked + 1) % G.people.length;
+      s.event.sceneNpc = picked;
+    }
+    if (Number.isInteger(s.event?.sceneNpc)) {
+      s.npc = s.event.sceneNpc;
+      s.lastSceneNpc = s.npc;
     }
     if (s.tutorial === "draw") s.tutorial = "decision";
     save();

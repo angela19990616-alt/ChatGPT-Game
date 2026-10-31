@@ -260,3 +260,8 @@ input,select,textarea{color:#f8ecd1;background:#0b1220e8;border:1px solid #5e526
   dialog{width:calc(100% - 12px);max-width:none;max-height:88dvh;margin:auto 6px 6px;border-radius:14px 14px 6px 6px;padding:14px}.modalhead{position:sticky;top:-14px;z-index:4;margin:-14px -14px 10px;padding:12px 14px;background:#101827f5}
   .pro-strip{grid-template-columns:repeat(4,minmax(0,1fr))}
 }
+
+/* Keep the next-step action reachable when reports or tutorial copy are long. */
+.vn-dialogue{display:flex;flex-direction:column;overflow:hidden}.vn-dialogue>p{min-height:0;overflow:auto;overscroll-behavior:contain}.vn-controls{flex:0 0 auto;position:relative;z-index:6;background:inherit}.daily-report{margin:12px 0 22px;padding:12px;border:1px solid #514735;border-radius:10px;background:#0c1421}.daily-report>.numbers{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media(max-width:700px){.opening .vn-dialogue,.event-game .vn-dialogue{max-height:min(46dvh,330px)}.opening .vn-dialogue>p,.event-game .vn-dialogue>p{flex:1 1 auto;max-height:none}.opening .vn-controls,.event-game .vn-controls{padding-top:7px}.opening .vn-controls .primary,.event-game .vn-controls .primary{width:100%;min-height:40px}.event-game .hintrow{grid-template-columns:repeat(5,minmax(0,1fr));max-width:none}.daily-report>.numbers{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.city-game .world{touch-action:none;translate:var(--pan-x,0) var(--pan-y,0);will-change:translate}.city-game .game-world::after{content:"拖动巡视城市";position:absolute;right:12px;top:110px;padding:4px 8px;border:1px solid #a88a4c;border-radius:12px;background:#070d17bf;color:#e7c979;font-size:9px;pointer-events:none}}

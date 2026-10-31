@@ -3,7 +3,7 @@
   const blueprints = [
     {
       id: "trend",
-      name: "趋势港",
+      name: "远见资本",
       strategy: "趋势决策",
       partner: "趋势交易员",
       icon: "◈",
@@ -13,7 +13,7 @@
     },
     {
       id: "value",
-      name: "价值街",
+      name: "恒金控股",
       strategy: "价值决策",
       partner: "价值投资员",
       icon: "◇",
@@ -23,7 +23,7 @@
     },
     {
       id: "defense",
-      name: "防守园",
+      name: "曜盾风控",
       strategy: "防守决策",
       partner: "风险管理师",
       icon: "⬡",
@@ -33,7 +33,7 @@
     },
     {
       id: "research",
-      name: "研究院",
+      name: "星图研究院",
       strategy: "研究决策",
       partner: "量化研究员",
       icon: "✦",
@@ -51,7 +51,7 @@
       name: "动量策略",
       icon: "▤",
       label: "趋势楼层",
-      description: "看最近涨得强的标的是否继续走强；装进趋势港后增加一层。",
+      description: "看最近涨得强的标的是否继续走强；安装后成为一层趋势策略。",
     },
     {
       id: "breakout",

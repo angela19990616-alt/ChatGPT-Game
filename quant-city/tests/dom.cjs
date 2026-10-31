@@ -68,7 +68,8 @@ const q = (s) => w.document.querySelector(s),
   assert.equal(state().event.seed, seed);
   click("[data-do=reveal]");
   assert.equal(state().tutorial, "decision");
-  assert.equal(state().npc, 3);
+  assert.ok(state().npc >= 0 && state().npc < G.people.length);
+  const sceneNpcs = new Set([state().npc]);
   assert.ok(q(".eventcard").textContent.includes("价值低吸"));
   assert.equal(q(".pro-strip").children.length, 4);
   assert.ok(q(".eventcard").textContent.includes("配置资金"));
@@ -107,6 +108,11 @@ const q = (s) => w.document.querySelector(s),
   assert.ok(q(".game-dock"));
   assert.equal(state().round, 1);
   assert.equal(state().tutorial, "done");
+  const cityMap = q(".city-game .world");
+  cityMap.dispatchEvent(new w.MouseEvent("pointerdown", { bubbles: true, clientX: 100, clientY: 100 }));
+  cityMap.dispatchEvent(new w.MouseEvent("pointermove", { bubbles: true, clientX: 140, clientY: 130 }));
+  cityMap.dispatchEvent(new w.MouseEvent("pointerup", { bubbles: true, clientX: 140, clientY: 130 }));
+  assert.equal(cityMap.style.getPropertyValue("--pan-x"), "40px", "mobile city background should be draggable");
   click("[data-do=warehouse]");
   assert.equal(w.document.querySelectorAll(".strategy-family").length, 4);
   assert.match(q("#modal").textContent, /趋势决策/);
@@ -144,7 +150,12 @@ const q = (s) => w.document.querySelector(s),
     click("[data-do=board]");
     click("[data-do=draw]");
     click("[data-do=reveal]");
+    sceneNpcs.add(state().npc);
     if (i === 1) {
+      const partner = G.people[state().npc].id, beforeAffection = state().affection[partner];
+      click("[data-do=sceneAgree]");
+      assert.equal(state().affection[partner], beforeAffection + 1);
+      assert.ok(state().sceneInteractions[state().event.id]);
       input("#message", "投入-500");
       submit("#chat");
       assert.equal(q("#modal").open, false);
@@ -164,13 +175,19 @@ const q = (s) => w.document.querySelector(s),
     if (i < 8) {
       click("[data-do=next]");
       {
-        if (state().phase === "daybreak") click("[data-do=startDay]");
+        if (state().phase === "daybreak") {
+          assert.match(q("body").textContent, /昨日财报/);
+          assert.match(q("body").textContent, /当前可用现金/);
+          click("[data-do=startDay]");
+        }
         else click("[data-do=city]");
       }
     }
   }
+  assert.ok(sceneNpcs.size >= 2, "market scenes should rotate through different partners");
   assert.equal(state().phase, "finalReport");
   assert.ok(q("body").textContent.includes("三日经营财报"));
+  assert.equal(w.document.querySelectorAll(".daily-report").length, 3);
   click("[data-do=finalProfile]");
   assert.ok(q(".summary"));
   assert.equal(w.document.querySelectorAll(".strategy-explain").length, 4);
