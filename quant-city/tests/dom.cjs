@@ -39,22 +39,16 @@ const q = (s) => w.document.querySelector(s),
   };
 (async () => {
   assert.ok(q("[data-do=askName]"));
-  assert.ok(q(".opening .vn-character"), "opening story should be integrated with the character portrait");
-  assert.doesNotMatch(q(".opening .vn-dialogue").textContent, /每天处理 3 份|第 4 天|已经懂投资/);
-  assert.match(q(".opening .vn-dialogue").textContent, /董事会只给你三天/);
   assert.equal(q(".game-dock"), null);
   click("[data-do=askName]");
   submit("#start");
   assert.ok(q("#start"));
   input("#nickname", "<img>总");
   submit("#start");
-  assert.equal(state().tutorial, "briefing");
-  assert.match(q(".vn-dialogue").textContent, /每天处理 3 份市场来信/);
+  assert.ok(q(".vn-dialogue").textContent.includes("第一封市场来信"));
   assert.ok(q("[data-do=skipTutorial]"), "tutorial should always offer a visible skip action");
   assert.ok(!q(".vn-dialogue").textContent.includes("<img>总"));
   assert.equal(q(".vn-dialogue img"), null);
-  click("[data-do=startTutorial]");
-  assert.ok(q(".vn-dialogue").textContent.includes("第一封市场来信"));
   assert.equal(state().tutorial, "draw");
   reload();
   assert.ok(q("[data-do=draw]"));
@@ -68,13 +62,11 @@ const q = (s) => w.document.querySelector(s),
   assert.equal(state().event.seed, seed);
   click("[data-do=reveal]");
   assert.equal(state().tutorial, "decision");
-  assert.ok(state().npc >= 0 && state().npc < G.people.length);
-  const sceneNpcs = new Set([state().npc]);
+  assert.equal(state().npc, 3);
   assert.ok(q(".eventcard").textContent.includes("价值低吸"));
-  assert.equal(q(".pro-strip").children.length, 4);
-  assert.ok(q(".eventcard").textContent.includes("配置资金"));
-  assert.ok(q(".eventcard").textContent.includes("补充研究"));
-  assert.ok(q(".eventcard").textContent.includes("保持现金"));
+  assert.ok(q(".eventcard").textContent.includes("自定金额投入"));
+  assert.ok(q(".eventcard").textContent.includes("先查资料"));
+  assert.ok(q(".eventcard").textContent.includes("不投"));
   reload();
   assert.ok(q("[data-do=choose]"));
   click("[data-do=choose][data-id=small]");
@@ -101,18 +93,11 @@ const q = (s) => w.document.querySelector(s),
   click("[data-do=buildCity]");
   assert.equal(state().tutorial, "finish");
   assert.ok(q(".vn-dialogue").textContent.includes("花费 1000"));
-  assert.ok(q(".building-defense"), "constructed districts should render their distinct building silhouette");
-  assert.ok(q(".tower-sign"), "constructed buildings should include facade signage");
   reload();
   click("[data-do=finishTutorial]");
   assert.ok(q(".game-dock"));
   assert.equal(state().round, 1);
   assert.equal(state().tutorial, "done");
-  const cityMap = q(".city-game .world");
-  cityMap.dispatchEvent(new w.MouseEvent("pointerdown", { bubbles: true, clientX: 100, clientY: 100 }));
-  cityMap.dispatchEvent(new w.MouseEvent("pointermove", { bubbles: true, clientX: 140, clientY: 130 }));
-  cityMap.dispatchEvent(new w.MouseEvent("pointerup", { bubbles: true, clientX: 140, clientY: 130 }));
-  assert.equal(cityMap.style.getPropertyValue("--pan-x"), "40px", "mobile city background should be draggable");
   click("[data-do=warehouse]");
   assert.equal(w.document.querySelectorAll(".strategy-family").length, 4);
   assert.match(q("#modal").textContent, /趋势决策/);
@@ -131,7 +116,7 @@ const q = (s) => w.document.querySelector(s),
   assert.equal(state().city.cycle, 1);
   assert.equal(state().round, 1);
   assert.equal(q(".city-day-status"), null);
-  assert.ok(q("[data-do=cycle]").textContent.includes("今日已结算"));
+  assert.ok(q("[data-do=cycle]").textContent.includes("今日已领取"));
   assert.ok(q("[data-do=cycle]").disabled);
   click("[data-do=cycle]");
   assert.equal(q("#modal").open, false);
@@ -150,12 +135,7 @@ const q = (s) => w.document.querySelector(s),
     click("[data-do=board]");
     click("[data-do=draw]");
     click("[data-do=reveal]");
-    sceneNpcs.add(state().npc);
     if (i === 1) {
-      const partner = G.people[state().npc].id, beforeAffection = state().affection[partner];
-      click("[data-do=sceneAgree]");
-      assert.equal(state().affection[partner], beforeAffection + 1);
-      assert.ok(state().sceneInteractions[state().event.id]);
       input("#message", "投入-500");
       submit("#chat");
       assert.equal(q("#modal").open, false);
@@ -175,19 +155,13 @@ const q = (s) => w.document.querySelector(s),
     if (i < 8) {
       click("[data-do=next]");
       {
-        if (state().phase === "daybreak") {
-          assert.match(q("body").textContent, /昨日财报/);
-          assert.match(q("body").textContent, /当前可用现金/);
-          click("[data-do=startDay]");
-        }
+        if (state().phase === "daybreak") click("[data-do=startDay]");
         else click("[data-do=city]");
       }
     }
   }
-  assert.ok(sceneNpcs.size >= 2, "market scenes should rotate through different partners");
   assert.equal(state().phase, "finalReport");
   assert.ok(q("body").textContent.includes("三日经营财报"));
-  assert.equal(w.document.querySelectorAll(".daily-report").length, 3);
   click("[data-do=finalProfile]");
   assert.ok(q(".summary"));
   assert.equal(w.document.querySelectorAll(".strategy-explain").length, 4);

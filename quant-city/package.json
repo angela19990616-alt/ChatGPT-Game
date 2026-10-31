@@ -4,7 +4,7 @@
   "version": "0.20.0",
   "scripts": {
     "start": "node --env-file-if-exists=.env server/server.mjs",
-    "test": "node --test tests/engine.test.cjs tests/api.test.mjs tests/worker.test.mjs && node tests/dom.cjs && node tests/partner-dom.cjs && node tests/career-dom.cjs && node tests/investment-dom.cjs && node tests/public-ai-dom.cjs && node tests/async-client.cjs",
+    "test": "node --test tests/engine.test.cjs tests/api.test.mjs tests/worker.test.mjs && node tests/dom.cjs && node tests/career-dom.cjs && node tests/investment-dom.cjs && node tests/public-ai-dom.cjs && node tests/async-client.cjs",
     "check": "node scripts/check.mjs",
     "pack": "node scripts/pack.mjs"
   },

@@ -15,9 +15,9 @@ const html=fs.readFileSync(__dirname+'/../dist/index.html','utf8');
   await new Promise(resolve=>w.setTimeout(resolve,0));
 
   assert.equal(w.document.querySelectorAll('[data-do=choose]').length,3);
-  assert.match(w.document.querySelector('.gamechoices').textContent,/配置资金 · 自定仓位/);
-  assert.match(w.document.querySelector('.gamechoices').textContent,/保持现金 · 等待信号/);
-  assert.match(w.document.querySelector('.gamechoices').textContent,/补充研究 · 先验证/);
+  assert.match(w.document.querySelector('.gamechoices').textContent,/投入 · 金额由你决定/);
+  assert.match(w.document.querySelector('.gamechoices').textContent,/不投 · 保留现金/);
+  assert.match(w.document.querySelector('.gamechoices').textContent,/先查资料 · 研究/);
 
   const term=w.document.querySelector('[data-do=termHelp]');
   assert.ok(term,'event concept should be visibly explainable');
