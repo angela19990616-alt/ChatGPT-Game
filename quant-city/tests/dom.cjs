@@ -96,6 +96,8 @@ const q = (s) => w.document.querySelector(s),
   click("[data-do=buildCity]");
   assert.equal(state().tutorial, "finish");
   assert.ok(q(".vn-dialogue").textContent.includes("花费 1000"));
+  assert.ok(q(".building-defense"), "constructed districts should render their distinct building silhouette");
+  assert.ok(q(".tower-sign"), "constructed buildings should include facade signage");
   reload();
   click("[data-do=finishTutorial]");
   assert.ok(q(".game-dock"));
