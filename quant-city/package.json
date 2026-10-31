@@ -1,7 +1,7 @@
 {
-  "name": "panda-quant-city",
+  "name": "panda-quant-boardroom",
   "private": true,
-  "version": "0.3.0",
+  "version": "0.11.0",
   "scripts": {
     "start": "node --env-file-if-exists=.env server/server.mjs",
     "test": "node --test tests/engine.test.cjs tests/api.test.mjs && node tests/dom.cjs && node tests/async-client.cjs",

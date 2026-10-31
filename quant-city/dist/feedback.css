@@ -1,0 +1,156 @@
+.city-feedback {
+  position: absolute;
+  z-index: 7;
+  top: 90px;
+  right: 24px;
+  width: min(340px, calc(100% - 48px));
+  padding: 16px 18px;
+  background: #fff8e9f5;
+  border: 2px solid #d8bd7b;
+  border-radius: 16px;
+  box-shadow: 0 9px 30px #294c4630;
+}
+
+.city-feedback b { color: #4c6e5d; }
+.city-feedback p { font-size: 12px; margin: 6px 0 10px; }
+
+.decision-map {
+  margin: 18px 0;
+  padding: 16px;
+  background: #eef0df;
+  border-radius: 12px;
+}
+
+.decision-map h3 { margin-bottom: 4px; }
+.result-role { display: grid; grid-template-columns: 150px 1fr; gap: 18px; align-items: center; margin-bottom: 18px; }
+.result-portrait { width: 150px; height: 190px; object-fit: contain; object-position: bottom; border-radius: 18px; background: #dfe4cd; }
+.result-role h2 { margin: 2px 0; font-size: 30px; }
+.decision-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.decision-chips span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+  background: #fff9e7;
+  border: 1px solid #d4ccb4;
+  border-radius: 99px;
+  font-size: 12px;
+}
+.decision-chips b { color: #9b7133; font-size: 17px; }
+
+.strategy-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.strategy-grid span {
+  padding: 12px 8px;
+  text-align: center;
+  background: #fff9e7;
+  border: 1px solid #d4ccb4;
+  border-radius: 10px;
+  font-size: 12px;
+}
+
+.strategy-grid span.top { border-color: #b48437; box-shadow: inset 0 0 0 1px #d5af68; }
+.strategy-grid b { display: block; color: #9b7133; font-size: 22px; }
+.strategy-grid small { display: block; margin-top: 3px; font-size: 9px; }
+
+.choice-type,
+.trade-type b {
+  color: #8a5f28;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.choice-type {
+  display: inline-block;
+  padding: 2px 6px;
+  background: #eee3c7;
+  border-radius: 99px;
+  font-size: 9px;
+  white-space: nowrap;
+}
+.rarity-badge { position: absolute; top: 9px; right: 10px; z-index: 3; padding: 3px 8px; border-radius: 20px; background: #263b34; color: #fff5ca; font-weight: 900; letter-spacing: 2px; }
+.rarity-r { box-shadow: 0 8px 28px #b8c6bb88; }
+.rarity-sr { border-color: #7fc8ff !important; box-shadow: 0 0 24px #55b9ff99, 0 10px 35px #234f6b66; animation: sr-glow 1.2s ease-in-out infinite alternate; }
+.rarity-ssr { border-color: #ffe16b !important; box-shadow: 0 0 28px #ffcf40, 0 0 70px #d875ffcc; animation: ssr-glow .7s ease-in-out infinite alternate; }
+@keyframes sr-glow { to { filter: brightness(1.13); transform: translateY(-3px); } }
+@keyframes ssr-glow { from { filter: hue-rotate(0deg) brightness(1.05); transform: scale(1); } to { filter: hue-rotate(35deg) brightness(1.28); transform: scale(1.025); } }
+
+.partner-inventory { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin:16px 0 4px; }
+.partner-card { position:relative; min-height:280px; padding:0; overflow:hidden; border:2px solid #aebbb4; border-radius:18px; background:linear-gradient(155deg,#193830,#0e1b19 62%); color:#fff; isolation:isolate; }
+.partner-card.rarity-sr,.partner-card.rarity-ssr { animation:none; }
+.partner-card.locked .partner-card-art { filter:grayscale(.75) brightness(.58); }
+.partner-card.locked .partner-card-info small::before { content:'🔒 '; }
+.partner-card.unlocked { border-color:#7fc8ff; box-shadow:0 0 24px #55b9ff66,0 10px 35px #234f6b55; }
+.partner-card::after { content:''; position:absolute; inset:42% 0 0; z-index:1; background:linear-gradient(transparent,#07110ff5 72%); pointer-events:none; }
+.partner-card-art { width:100%; height:280px; object-fit:cover; object-position:center top; transition:transform .25s ease; }
+.partner-card:hover .partner-card-art,.partner-card:focus-visible .partner-card-art { transform:scale(1.035); }
+.partner-rarity { position:absolute; top:10px; left:10px; z-index:2; padding:5px 9px; border-radius:8px; background:#15221fd9; color:#ffe889; font-size:12px; font-weight:900; letter-spacing:2px; }
+.partner-card-info { position:absolute; right:14px; bottom:14px; left:14px; z-index:2; text-align:left; }
+.partner-card-info b { display:block; font-size:22px; }
+.partner-card-info small { color:#d6e8e1; }
+.partner-profile { display:grid; grid-template-columns:minmax(160px,220px) 1fr; gap:22px; align-items:center; margin:10px 0 22px; }
+.partner-profile-art { width:100%; max-height:330px; object-fit:cover; object-position:center top; border:2px solid #d6b86f; border-radius:18px; background:#17342d; }
+.partner-profile h2 { margin:8px 0 2px; }
+.partner-profile p { line-height:1.65; }
+.partner-line { margin:8px 0; padding:10px 12px; border-radius:10px; background:#f2ecd9; }
+.strategy-link-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:7px; margin:12px 0; }
+.strategy-link-grid span { padding:8px 5px; border:1px solid #d1c5a5; border-radius:9px; background:#fff9e8; text-align:center; }
+.strategy-link-grid b,.strategy-link-grid small { display:block; font-size:10px; }
+.strategy-link-grid.materials { grid-template-columns:repeat(2,minmax(0,1fr)); }
+
+.trade-type {
+  display: inline-block;
+  margin-bottom: 10px;
+  padding: 7px 11px;
+  background: #eee8d5;
+  border-radius: 9px;
+  font-size: 13px;
+}
+
+.bankruptcy-screen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  color: #fff;
+  background: radial-gradient(circle, #7c2020, #190a0a 68%);
+  animation: bankruptcy-flash .7s ease-out both;
+}
+
+.bankruptcy-card {
+  position: relative;
+  z-index: 2;
+  width: min(460px, calc(100% - 40px));
+  padding: 42px 28px;
+  text-align: center;
+  border: 2px solid #ff9b82;
+  border-radius: 22px;
+  background: #250d0de8;
+  box-shadow: 0 30px 90px #000b;
+  animation: bankruptcy-drop .8s cubic-bezier(.2,.8,.2,1) both;
+}
+.bankruptcy-card h1 { margin: 10px 0; color: #ffb09d; font-size: clamp(52px, 12vw, 96px); }
+.bankruptcy-card button { margin: 8px 4px 0; }
+.bankruptcy-crack { position: absolute; font-size: 80vh; opacity: .08; transform: rotate(12deg); }
+@keyframes bankruptcy-flash { 0% { filter: brightness(4); } 35% { transform: translateX(-12px); } 55% { transform: translateX(10px); } 100% { filter: none; } }
+@keyframes bankruptcy-drop { from { opacity: 0; transform: translateY(-90px) rotate(-4deg) scale(1.2); } to { opacity: 1; transform: none; } }
+
+@media (max-width: 700px) {
+  .city-feedback { top: 70px; right: 14px; width: min(310px, calc(100% - 28px)); }
+  .strategy-grid { grid-template-columns: 1fr 1fr; }
+  .result-role { grid-template-columns: 100px 1fr; }
+  .result-portrait { width: 100px; height: 140px; }
+  .partner-inventory { gap:9px; }
+  .partner-card { min-height:220px; }
+  .partner-card-art { height:220px; }
+  .partner-card-info { right:10px; bottom:10px; left:10px; }
+  .partner-card-info b { font-size:18px; }
+  .partner-profile { grid-template-columns:120px 1fr; gap:14px; align-items:start; }
+  .partner-profile-art { min-height:190px; }
+  .strategy-link-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}

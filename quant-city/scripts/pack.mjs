@@ -7,6 +7,8 @@ for(const f of names) assets[f]='data:image/png;base64,'+(await readFile(new URL
 let html=await readFile(new URL('dist/index.html',root),'utf8');
 const css=await readFile(new URL('dist/style.css',root),'utf8');
 html=html.replace('<link rel="stylesheet" href="style.css">',()=>'<style>'+css+'</style>');
+const feedbackCss=await readFile(new URL('dist/feedback.css',root),'utf8');
+html=html.replace('<link rel="stylesheet" href="feedback.css">',()=>'<style>'+feedbackCss+'</style>');
 for(const f of ['engine.js','city.js','providers.js','analyst.js','city-art.js','ai-client.js','app.js']){
  let source=await readFile(new URL('dist/'+f,root),'utf8');
  if(f==='app.js')source=source.replace('src="assets/${p.file}"','src="${window.PANDA_EMBEDDED_ASSETS[p.file]}"');
@@ -15,5 +17,5 @@ for(const f of ['engine.js','city.js','providers.js','analyst.js','city-art.js',
  html=html.replace(tag,()=>'<script>'+source.replaceAll('</script','<\\/script')+'</script>');
 }
 html=html.replace('<script>',()=>'<script>window.PANDA_EMBEDDED_ASSETS='+JSON.stringify(assets)+';</script><script>');
-await writeFile(new URL('量化之城-离线版.html',root),html);
+await writeFile(new URL('量化董事会-离线版.html',root),html);
 console.log('Standalone HTML generated with four portraits, CSS and seven scripts.');
