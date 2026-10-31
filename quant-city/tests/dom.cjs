@@ -40,7 +40,7 @@ const q = (s) => w.document.querySelector(s),
 (async () => {
   assert.ok(q("[data-do=askName]"));
   assert.ok(q(".opening .vn-character"), "gameplay explanation should be integrated with the character portrait");
-  assert.match(q(".opening .vn-dialogue").textContent, /小平层做成摩天集团/);
+  assert.match(q(".opening .vn-dialogue").textContent, /有经验的投资者|已经懂投资/);
   assert.equal(q(".game-dock"), null);
   click("[data-do=askName]");
   submit("#start");
@@ -66,9 +66,10 @@ const q = (s) => w.document.querySelector(s),
   assert.equal(state().tutorial, "decision");
   assert.equal(state().npc, 3);
   assert.ok(q(".eventcard").textContent.includes("价值低吸"));
-  assert.ok(q(".eventcard").textContent.includes("自定金额投入"));
-  assert.ok(q(".eventcard").textContent.includes("先查资料"));
-  assert.ok(q(".eventcard").textContent.includes("不投"));
+  assert.equal(q(".pro-strip").children.length, 4);
+  assert.ok(q(".eventcard").textContent.includes("配置资金"));
+  assert.ok(q(".eventcard").textContent.includes("补充研究"));
+  assert.ok(q(".eventcard").textContent.includes("保持现金"));
   reload();
   assert.ok(q("[data-do=choose]"));
   click("[data-do=choose][data-id=small]");

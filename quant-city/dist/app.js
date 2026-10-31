@@ -125,7 +125,7 @@
   }
   function intro() {
     s = null;
-    app.innerHTML = `<main class="game opening">${world()}<div class="opening-shade"></div><div class="chapter-stamp">第一集<small>董事长，请接管这座城</small></div>${character()}${speech(`<b>三天之内，把小平层做成摩天集团。</b><br>① 每天处理 3 份商业情报，决定投入、不投或先调查。<br>② 拿下区域、招募策略团队，让办公室从一层总部一路升级。<br>③ 第 4 天召开集团庆功宴，公布你的董事长画像与下一步版图。<br><small>这是量化经营游戏，不代表真实投资收益。</small>`, '<button class="primary" data-do="askName">签署任命书，接管集团 ' + CityArt.icon("arrow") + "</button>")}<button class="skip-dialogue" data-do="askName">直接进入集团</button>${foot()}</main>`;
+    app.innerHTML = `<main class="game opening">${world()}<div class="opening-shade"></div><div class="chapter-stamp">第一集<small>董事长，请接管这座城</small></div>${character()}${speech(`<b>你已经懂投资，现在用三天进入专业量化。</b><br>① 每天处理 3 份商业情报：看信号、算风险，再决定资金比例。<br>② 建立四类策略总部，用新数据验证规则，让小平层成长为摩天集团。<br>③ 第 4 天形成你的策略画像，并匹配 PandaAI 策略、因子与研究工具。<br><small>这是量化研究经营游戏，不构成真实投资建议。</small>`, '<button class="primary" data-do="askName">签署任命书，进入量化集团 ' + CityArt.icon("arrow") + "</button>")}<button class="skip-dialogue" data-do="askName">直接进入集团</button>${foot()}</main>`;
   }
   function askName() {
     app.innerHTML = `<main class="game opening">${world()}<div class="opening-shade"></div>${character()}<section class="vn-dialogue name-dialogue"><div class="nameplate">量化研究员<small>新手引导</small></div><p>请告诉我您的名字。接下来，大家统一称呼您为“董事长”。</p><form id="start"><div class="nameentry"><input id="nickname" maxlength="12" placeholder="输入你的名字" autocomplete="off" aria-label="董事长姓名"></div><label class="savechoice"><input id="persist" type="checkbox" checked> 保存到这台设备</label><small class="privacyline">名字、对话和选择只用于本局，可查看、纠正或清除。</small><button class="primary" type="submit">以董事长身份进入 →</button></form></section>${foot()}</main>`;
@@ -251,7 +251,7 @@
         risk = { full: "较高", small: "适中", skip: "较低", report: "中低" }[l.actionId];
       return `<article class="eventcard receipt"><div class="card-kicker">第 ${day} 天 · 第 ${turn}/3 轮</div><h2>${a}偏好 +1</h2><p>本次风险选择：${risk}</p><div class="receipt-value">−${l.debit}<small>今天先冻结</small></div><div class="receipt-detail">明天返还 ${l.credit}<br>现在还能用 ${s.balance}</div><button class="quiet small" data-do="ledger">看账单</button></article>`;
     }
-    return `<article class="eventcard card-reveal rarity-${e.rarity.toLowerCase()}"><div class="rarity-badge">${e.rarity}</div><div class="card-kicker">第 ${day} 天 · 第 ${turn}/3 轮 · 总进度 ${s.round + 1}/9</div><div class="event-illustration">${CityArt.icon(e.type === "成本" ? "coin" : "city")}<span>${e.strategyName}</span></div><h2>${esc(e.title)}</h2><p>${esc(e.story)}</p><div class="notice"><b>简单说：</b>${esc(e.fact)}</div><details class="rules"><summary>钱什么时候回来？</summary><p>今天投入的钱先冻结，第二天连同结果一起返还。第三天投入的钱会在最终画像前结算。</p></details><div class="gamechoices"><button data-do="choose" data-id="full" ${available < 1 ? "disabled" : ""}><em class="choice-type">自定金额投入</em>${esc(copy.full)}<small>${available < 1 ? "无可投资金" : "最多可投 " + available + " 币"}</small></button><button data-do="choose" data-id="small" ${available < 1 ? "disabled" : ""}><em class="choice-type">小额投入</em>${esc(copy.small)}<small>${available < 1 ? "无可投资金" : "金额可修改"}</small></button><button data-do="choose" data-id="skip"><em class="choice-type">不投</em>${esc(copy.skip)}<small>不花钱，保留现金</small></button><button data-do="choose" data-id="report" ${50 > s.balance ? "disabled" : ""}><em class="choice-type">先查资料</em>${esc(copy.report)}<small>${50 > s.balance ? "钱不够" : "花 50 币查证"}</small></button></div></article>`;
+    return `<article class="eventcard card-reveal rarity-${e.rarity.toLowerCase()}"><div class="rarity-badge">${e.rarity}</div><div class="card-kicker">第 ${day} 天 · 第 ${turn}/3 轮 · 总进度 ${s.round + 1}/9</div><div class="event-illustration">${CityArt.icon(e.type === "成本" ? "coin" : "city")}<span>${e.strategyName}</span></div><h2>${esc(e.title)}</h2><p>${esc(e.story)}</p><div class="notice"><b>投资结论：</b>${esc(e.fact)}</div><div class="pro-strip"><span><small>策略方向</small><b>${esc(e.strategyName)}</b></span><span><small>游戏胜率</small><b>${e.p}%</b></span><span><small>有利情景</small><b>${e.up}%返还</b></span><span><small>不利情景</small><b>${e.down}%返还</b></span></div><details class="rules"><summary>查看结算与研究口径</summary><p>今天投入的钱先冻结，第二天连同结果一起返还。第三天投入的钱会在最终画像前结算。以上为游戏参数，不代表真实策略胜率。</p></details><div class="gamechoices"><button data-do="choose" data-id="full" ${available < 1 ? "disabled" : ""}><em class="choice-type">配置资金</em>${esc(copy.full)}<small>${available < 1 ? "无可投资金" : "最多可投 " + available + " 币"}</small></button><button data-do="choose" data-id="small" ${available < 1 ? "disabled" : ""}><em class="choice-type">小额验证</em>${esc(copy.small)}<small>${available < 1 ? "无可投资金" : "金额可修改"}</small></button><button data-do="choose" data-id="skip"><em class="choice-type">保持现金</em>${esc(copy.skip)}<small>不花钱，等待新信号</small></button><button data-do="choose" data-id="report" ${50 > s.balance ? "disabled" : ""}><em class="choice-type">补充研究</em>${esc(copy.report)}<small>${50 > s.balance ? "钱不够" : "花 50 币查证"}</small></button></div></article>`;
   }
 
   function open(title, body) {
@@ -440,10 +440,10 @@
     if (invest && !card.dataset.simpleChoices) {
       card.dataset.simpleChoices = "true";
       invest.dataset.id = "custom";
-      invest.innerHTML = `<em class="choice-type">投入 · 金额由你决定</em>看好这个机会，自己填写投入金额<small>当前最多可投 ${maxInvestable()} 币</small>`;
+      invest.innerHTML = `<em class="choice-type">配置资金 · 自定仓位</em>根据判断填写本轮投入金额<small>当前最多可投 ${maxInvestable()} 币</small>`;
       small?.remove();
-      if (skip) skip.innerHTML = '<em class="choice-type">不投 · 保留现金</em>这次不投入<small>不会扣钱</small>';
-      if (report) report.innerHTML = '<em class="choice-type">先查资料 · 研究</em>先看资料再决定<small>花 50 币查证</small>';
+      if (skip) skip.innerHTML = '<em class="choice-type">保持现金 · 等待信号</em>本轮不配置资金<small>不会扣钱</small>';
+      if (report) report.innerHTML = '<em class="choice-type">补充研究 · 先验证</em>先核对资料再决定<small>花 50 币查证</small>';
     }
   }
   function decorateDecisionReview() {
