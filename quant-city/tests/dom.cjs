@@ -39,18 +39,22 @@ const q = (s) => w.document.querySelector(s),
   };
 (async () => {
   assert.ok(q("[data-do=askName]"));
-  assert.ok(q(".opening .vn-character"), "gameplay explanation should be integrated with the character portrait");
-  assert.match(q(".opening .vn-dialogue").textContent, /有经验的投资者|已经懂投资/);
+  assert.ok(q(".opening .vn-character"), "opening story should be integrated with the character portrait");
+  assert.doesNotMatch(q(".opening .vn-dialogue").textContent, /每天处理 3 份|第 4 天|已经懂投资/);
+  assert.match(q(".opening .vn-dialogue").textContent, /董事会只给你三天/);
   assert.equal(q(".game-dock"), null);
   click("[data-do=askName]");
   submit("#start");
   assert.ok(q("#start"));
   input("#nickname", "<img>总");
   submit("#start");
-  assert.ok(q(".vn-dialogue").textContent.includes("第一封市场来信"));
+  assert.equal(state().tutorial, "briefing");
+  assert.match(q(".vn-dialogue").textContent, /每天处理 3 份市场来信/);
   assert.ok(q("[data-do=skipTutorial]"), "tutorial should always offer a visible skip action");
   assert.ok(!q(".vn-dialogue").textContent.includes("<img>总"));
   assert.equal(q(".vn-dialogue img"), null);
+  click("[data-do=startTutorial]");
+  assert.ok(q(".vn-dialogue").textContent.includes("第一封市场来信"));
   assert.equal(state().tutorial, "draw");
   reload();
   assert.ok(q("[data-do=draw]"));

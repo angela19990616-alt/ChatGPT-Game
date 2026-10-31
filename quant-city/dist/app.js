@@ -128,7 +128,7 @@
   }
   function intro() {
     s = null;
-    app.innerHTML = `<main class="game opening">${world()}<div class="opening-shade"></div><div class="chapter-stamp">第一集<small>董事长，请接管这座城</small></div>${character()}${speech(`<b>你已经懂投资，现在用三天进入专业量化。</b><br>① 每天处理 3 份商业情报：看信号、算风险，再决定资金比例。<br>② 建立四类策略总部，用新数据验证规则，让小平层成长为摩天集团。<br>③ 第 4 天形成你的策略画像，并匹配 PandaAI 策略、因子与研究工具。<br><small>这是量化研究经营游戏，不构成真实投资建议。</small>`, '<button class="primary" data-do="askName">签署任命书，进入量化集团 ' + CityArt.icon("arrow") + "</button>")}<button class="skip-dialogue" data-do="askName">直接进入集团</button>${foot()}</main>`;
+    app.innerHTML = `<main class="game opening">${world()}<div class="opening-shade"></div><div class="chapter-stamp">第一集<small>董事长，请接管这座城</small></div>${character()}${speech(`<b>董事会只给你三天。</b><br>从一间小办公室开始，把正确的判断变成一座摩天集团。<br>三天之后，市场会告诉我们：你究竟适合坐在哪个位置。`, '<button class="primary" data-do="askName">签署任命书 ' + CityArt.icon("arrow") + "</button>")}<button class="skip-dialogue" data-do="askName">直接开始</button>${foot()}</main>`;
   }
   function askName() {
     app.innerHTML = `<main class="game opening">${world()}<div class="opening-shade"></div>${character()}<section class="vn-dialogue name-dialogue"><div class="nameplate">量化研究员<small>新手引导</small></div><p>请告诉我您的名字。接下来，大家统一称呼您为“董事长”。</p><form id="start"><div class="nameentry"><input id="nickname" maxlength="12" placeholder="输入你的名字" autocomplete="off" aria-label="董事长姓名"></div><label class="savechoice"><input id="persist" type="checkbox" checked> 保存到这台设备</label><small class="privacyline">名字、对话和选择只用于本局，可查看、纠正或清除。</small><button class="primary" type="submit">以董事长身份进入 →</button></form></section>${foot()}</main>`;
@@ -137,7 +137,7 @@
       const name = $("#nickname").value.trim();
       if (!name) return toast("请先输入你的名字。");
       s = G.fresh(name, $("#persist").checked, "探索基础", 10000);
-      s.tutorial = "draw";
+      s.tutorial = "briefing";
       s.view = "board";
       GameCity.init(s);
       save();
@@ -174,8 +174,9 @@
         value: "价值",
         defense: "防守",
         research: "研究",
-      }[s.ledger.at(-1)?.attribute];
-    app.innerHTML = `<main class="game event-game">${world()}${hud()}${tutorial ? '<button class="tutorial-skip" data-do="skipTutorial">跳过教程</button>' : ""}<div class="event-shade"></div>${character(p)}${!tutorial ? `<button class="backcity" data-do="city">‹ 返回城市</button><div class="partner-switch">${G.people.map((p, i) => `<button data-do="npc" data-id="${i}" class="${s.npc === i ? "selected" : ""}" aria-label="切换到${p.name}">${art(p, "partner-face")}</button>`).join("")}</div>` : ""}${eventPanel()}${speech(s.phase === "result" ? `<b>${attr} +1</b><br>这次选择记下了。` : tutorial ? `第一封市场来信到了。<br>${s.phase === "event" ? "先看可能会赚多少、亏多少，再选投入、不投或先查资料。" : "点卡片，看看今天发生了什么。"}` : last ? esc(last.text) : dialogue(p), s.phase === "result" ? `<button class="primary" data-do="${tutorial ? "tutorialReward" : "next"}">${tutorial ? "领取开城物资" : s.round === G.CONFIG.rounds - 1 ? "看最终画像" : (s.round + 1) % G.CONFIG.roundsPerDay === 0 ? "结束今天" : "下一轮"} →</button>` : s.phase === "ready" || s.phase === "drawing" ? "" : `<div class="hintrow"><button data-do="ask" data-kind="risk">问风险</button><button data-do="ask" data-kind="tech">问依据</button><button data-do="ask" data-kind="finance">问费用</button><button data-do="lesson">没听懂</button></div>${tutorial ? "" : `<form id="chat" class="chatrow"><input id="message" maxlength="250" aria-label="和角色讨论" placeholder="说说你的想法…"><button type="submit">发送</button></form>`}`, p)}${foot()}</main>`;
+      }[s.ledger.at(-1)?.attribute],
+      tutorialCopy = s.tutorial === "briefing" ? `<b>先记住三件事：</b><br>① 每天处理 3 份市场来信，自己决定投多少，也可以不投或先查资料。<br>② 抽蓝图建总部，装上策略卡让大楼继续长高。<br>③ 第 4 天会根据选择、知识题和角色互动，给出职业画像。<br><small>这是模拟经营游戏，不构成真实投资建议。</small>` : `第一封市场来信到了。<br>${s.phase === "event" ? "先看可能会赚多少、亏多少，再选投入、不投或先查资料。" : "点卡片，看看今天发生了什么。"}`;
+    app.innerHTML = `<main class="game event-game">${world()}${hud()}${tutorial ? '<button class="tutorial-skip" data-do="skipTutorial">跳过教程</button>' : ""}<div class="event-shade"></div>${character(p)}${!tutorial ? `<button class="backcity" data-do="city">‹ 返回城市</button><div class="partner-switch">${G.people.map((p, i) => `<button data-do="npc" data-id="${i}" class="${s.npc === i ? "selected" : ""}" aria-label="切换到${p.name}">${art(p, "partner-face")}</button>`).join("")}</div>` : ""}${eventPanel()}${speech(s.phase === "result" ? `<b>${attr} +1</b><br>这次选择记下了。` : tutorial ? tutorialCopy : last ? esc(last.text) : dialogue(p), s.tutorial === "briefing" ? '<button class="primary" data-do="startTutorial">明白了，打开第一封市场来信 →</button>' : s.phase === "result" ? `<button class="primary" data-do="${tutorial ? "tutorialReward" : "next"}">${tutorial ? "领取开城物资" : s.round === G.CONFIG.rounds - 1 ? "看最终画像" : (s.round + 1) % G.CONFIG.roundsPerDay === 0 ? "结束今天" : "下一轮"} →</button>` : s.phase === "ready" || s.phase === "drawing" ? "" : `<div class="hintrow"><button data-do="ask" data-kind="risk">问风险</button><button data-do="ask" data-kind="tech">问依据</button><button data-do="ask" data-kind="finance">问费用</button><button data-do="lesson">没听懂</button></div>${tutorial ? "" : `<form id="chat" class="chatrow"><input id="message" maxlength="250" aria-label="和角色讨论" placeholder="说说你的想法…"><button type="submit">发送</button></form>`}`, p)}${foot()}</main>`;
     if ($("#chat"))
       $("#chat").onsubmit = (e) => {
         e.preventDefault();
@@ -234,6 +235,7 @@
     return amount;
   }
   function eventPanel() {
+    if (s.tutorial === "briefing") return "";
     if (s.phase === "ready" || s.phase === "drawing") return `<div class="drawstage"><button class="sealedcard ${s.phase === "drawing" ? "cardspinning" : ""} ${s.event ? "rarity-" + s.event.rarity.toLowerCase() : ""}" data-do="${s.phase === "drawing" ? "reveal" : "draw"}" aria-label="抽取事件卡"><span class="seal-border"></span><span class="seal">✦</span><b>市场来信</b><small>${s.phase === "drawing" ? "点击翻开" : "点击抽取"}</small></button>${s.phase === "drawing" ? '<button class="cancel-draw" data-do="cancelDraw">先等等</button>' : '<div class="finger-guide">点击卡片开启</div>'}</div>`;
     const e = s.event,
       day = Math.floor(s.round / G.CONFIG.roundsPerDay) + 1,
@@ -729,6 +731,12 @@
           break;
         case "askName":
           askName();
+          break;
+        case "startTutorial":
+          if (s.tutorial !== "briefing") break;
+          s.tutorial = "draw";
+          save();
+          render();
           break;
         case "cardHall":
           cardHall();
