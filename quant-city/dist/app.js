@@ -156,7 +156,7 @@
     return `<div class="vn-character">${art(p, "large-portrait")}</div>`;
   }
   function speech(text, buttons, p = G.people[0]) {
-    return `<section class="vn-dialogue"><div class="nameplate">${p.name}<small>${p.role}</small></div><p>${text}</p><div class="vn-controls">${buttons}</div></section>`;
+    return `<section class="vn-dialogue"><div class="nameplate">${p.name}<small>${p.role}</small></div><div class="dialogue-body">${text}</div><div class="vn-controls">${buttons}</div></section>`;
   }
   function dock() {
     const done = GameCity.cycledToday(s);
@@ -527,7 +527,7 @@
   function decorateDecisionReview() {
     if (s?.phase !== "result") return;
     const entry = s.ledger.at(-1),
-      text = app.querySelector(".event-game .vn-dialogue>p");
+      text = app.querySelector(".event-game .dialogue-body");
     if (!entry || !text || text.dataset.reviewed) return;
     const ratio = Math.round((entry.amount / Math.max(1, entry.balanceBefore)) * 100),
       tone = entry.report ? "先补信息" : !entry.amount ? "本轮保守观望" : ratio >= 50 ? "本轮明显进取" : ratio >= 20 ? "本轮相对均衡" : "本轮小额试探",
