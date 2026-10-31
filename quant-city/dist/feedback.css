@@ -203,3 +203,4 @@
 .event-game .eventcard:not(.receipt){bottom:auto;max-height:calc(100dvh - 300px)}
 @media(max-width:700px){.event-game .eventcard:not(.receipt){bottom:auto;max-height:calc(100dvh - 300px)}}
 @media(max-width:380px),(max-height:680px){.event-game .eventcard:not(.receipt){bottom:auto;max-height:calc(100dvh - 250px)}}
+.measurement{margin:18px 0;padding:16px;border-radius:14px;background:#edf2e3}.measurement-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.measurement-grid article{padding:12px 10px;border:1px solid #cad3b8;border-radius:10px;background:#fffaf0}.measurement-grid small,.measurement-grid b{display:block}.measurement-grid b{margin:4px 0;font-size:16px}.measurement-grid p{margin:0;font-size:10px;color:#6d7a6c}@media(max-width:700px){.measurement-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
