@@ -98,6 +98,7 @@
 .partner-profile h2 { margin:8px 0 2px; }
 .partner-profile p { line-height:1.65; }
 .partner-line { margin:8px 0; padding:10px 12px; border-radius:10px; background:#f2ecd9; }
+.partner-answers{display:grid;gap:7px;margin:10px 0 18px}.partner-answers button{text-align:left;line-height:1.45}.career-score-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin:12px 0}.career-score-grid span{padding:9px 5px;border:1px solid #594c38;border-radius:8px;background:#0d1624;text-align:center}.career-score-grid span.top{border-color:#dfb85d;box-shadow:0 0 20px #d7a94b35}.career-score-grid b,.career-score-grid small{display:block}.career-score-grid b{color:#f0cf78;font-size:20px}.career-score-grid small{font-size:9px}
 .strategy-link-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:7px; margin:12px 0; }
 .strategy-link-grid span { padding:8px 5px; border:1px solid #d1c5a5; border-radius:9px; background:#fff9e8; text-align:center; }
 .strategy-link-grid b,.strategy-link-grid small { display:block; font-size:10px; }

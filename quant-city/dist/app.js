@@ -65,6 +65,9 @@
   }
   function migrateStrategies(state) {
     if (!state) return state;
+    state.affection ||= { ai: 0, risk: 0, tech: 0, finance: 0 };
+    state.partnerTalks ||= {};
+    for (const p of G.people) state.affection[p.id] ??= 0;
     const enrich = (event) => {
       if (!event || event.strategy) return;
       const family = G.families.find((f) => f.title === event.title);
@@ -373,23 +376,46 @@
       rank = (n) => (n >= 5 ? "SSR" : n >= 2 ? "SR" : "R");
     for (const e of s.evidence.filter((e) => e.dimension === "attribute")) if (map[e.value]) scores[map[e.value]]++;
     open(
-      "策略伙伴",
-      `<p class="muted">同类决策和建设会增加伙伴点数：2 点升 SR，5 点升 SSR。</p><div class="partner-inventory">${G.people
+      "核心团队",
+      `<p class="muted">四位伙伴代表四种量化职业。每位伙伴每天可互动一次；回答会改变好感，也会成为第 4 天职业画像的一项依据。</p><div class="partner-inventory">${G.people
         .map((p, i) => {
-          const rarity = rank(scores[p.id]);
-          return `<button class="partner-card rarity-${rarity.toLowerCase()} ${scores[p.id] ? "unlocked" : "locked"}" data-do="partnerDetail" data-id="${i}"><span class="partner-rarity">${rarity}</span>${art(p, "partner-card-art")}<span class="partner-card-info"><b>${p.name}</b><small>${scores[p.id] ? p.code + "经验 · " + scores[p.id] + " 点" : "完成" + p.code + "决策解锁"}</small></span></button>`;
+          const rarity = rank(scores[p.id]), affection = s.affection?.[p.id] || 0;
+          return `<button class="partner-card rarity-${rarity.toLowerCase()} unlocked" data-do="partnerDetail" data-id="${i}"><span class="partner-rarity">${rarity}</span>${art(p, "partner-card-art")}<span class="partner-card-info"><b>${p.name}</b><small>${p.code}经验 ${scores[p.id]} · 好感 ${affection >= 0 ? "+" : ""}${affection}</small></span></button>`;
         })
         .join("")}</div>`,
     );
   }
+  const partnerScenes = {
+    ai: { question: "一套新策略回测曲线很好看，但只测过一段行情。你准备怎么推进？", answers: [{ text: "换一段没参与开发的数据再测", delta: 2, reply: "很好。先验证能不能重复，再谈上线。" }, { text: "先小范围试运行，同时继续记录", delta: 1, reply: "可以，但要把试运行和正式结论分开。" }, { text: "曲线好看，直接当成成熟策略", delta: -1, reply: "我不赞成。漂亮曲线可能只是挑中了合适时间。" }] },
+    risk: { question: "一个持仓突然下跌 8%，原来的退出条件已经触发。你会怎么做？", answers: [{ text: "按计划减仓或退出，先控制损失", delta: 2, reply: "纪律比临场侥幸更可靠。" }, { text: "先核对消息，保留少量观察仓", delta: 1, reply: "可以，但剩余风险必须明确。" }, { text: "继续加仓，把成本摊低", delta: -1, reply: "没有新证据就加仓，可能只是扩大错误。" }] },
+    tech: { question: "一个板块刚突破前期高点，但当天涨幅已经很大。你怎么处理？", answers: [{ text: "设好退出位置，小仓跟随", delta: 2, reply: "这符合趋势交易：跟随方向，也承认可能失败。" }, { text: "等下一次确认，不急着追", delta: 1, reply: "耐心也是策略，错过比失控更容易接受。" }, { text: "怕错过机会，立刻重仓追入", delta: -1, reply: "趋势不是追高的借口，仓位和退出必须先定。" }] },
+    finance: { question: "一家公司的价格跌了很多，但利润和现金流也在变差。你会怎么判断？", answers: [{ text: "先查经营和负债，确认便宜的原因", delta: 2, reply: "对。价格低只是线索，公司质量才决定价值。" }, { text: "分很小的仓位继续观察", delta: 1, reply: "可以，把它当验证，不要急着下结论。" }, { text: "跌得够多就是便宜，马上买入", delta: -1, reply: "下跌不自动等于低估，也可能是基本情况恶化。" }] },
+  };
+  function partnerKey(id) { return `s${s.season || 1}-d${Math.min(3, G.gameDay(s))}-${id}`; }
   function partnerDetail(i) {
     const p = G.people[i],
       lines = s.chats.filter((c) => c.npc === i).slice(-3),
       blueprint = GameCity.blueprints.find((b) => b.partner === p.name),
       factor = GameCity.factors.find((f) => f.industry === blueprint?.id),
       score = s.evidence.filter((e) => e.dimension === "attribute" && { ai: "research", risk: "defense", tech: "trend", finance: "value" }[p.id] === e.value).length,
-      rarity = score >= 5 ? "SSR" : score >= 2 ? "SR" : "R";
-    open(p.name + " · " + rarity + "角色卡", `<div class="partner-profile">${art(p, "partner-profile-art")}<div><span class="badge">${rarity} · ${p.code}策略 · ${score} 点</span><h2>${p.name}</h2><b>${p.role}</b><p>${p.hint}</p><div class="notice"><b>玩法关联：</b>${blueprint?.name || ""} → ${factor?.name || ""} → 建设后增加${p.code}画像点</div><small>升级规则：2 点 SR，5 点 SSR</small></div></div><h3>最近互动</h3>${lines.map((c) => `<div class="partner-line">第 ${c.round + 1} 轮 · ${esc(c.text)}</div>`).join("") || '<p class="muted">还没有互动。进入市场来信后可以和TA说话。</p>'}<button data-do="bonds">返回伙伴背包</button>`);
+      rarity = score >= 5 ? "SSR" : score >= 2 ? "SR" : "R",
+      affection = s.affection?.[p.id] || 0,
+      talked = s.partnerTalks?.[partnerKey(p.id)];
+    open(p.name + " · " + rarity + "角色卡", `<div class="partner-profile">${art(p, "partner-profile-art")}<div><span class="badge">${rarity} · ${p.code}经验 ${score} · 好感 ${affection >= 0 ? "+" : ""}${affection}</span><h2>${p.name}</h2><b>${p.role}</b><p>${p.hint}</p><div class="notice"><b>职业差异：</b>${blueprint?.name || ""} → ${factor?.name || ""}。市场选择体现策略偏好；角色互动体现你对这类工作方式的认同。</div><small>角色卡：2 点策略经验升 SR，5 点升 SSR。好感单独记录，不会冒充知识能力。</small></div></div><h3>今日互动</h3>${talked ? `<div class="partner-line"><b>${talked.delta > 0 ? "好感 +" + talked.delta : talked.delta < 0 ? "好感 " + talked.delta : "好感不变"}</b><br>${esc(talked.reply)}</div><p class="muted">今天已经互动过，明天可以再次交流。</p>` : `<p>${partnerScenes[p.id].question}</p><div class="partner-answers">${partnerScenes[p.id].answers.map((a, n) => `<button data-do="partnerAnswer" data-id="${i}" data-value="${n}">${a.text}</button>`).join("")}</div>`}<h3>最近自由对话</h3>${lines.map((c) => `<div class="partner-line">第 ${c.round + 1} 轮 · ${esc(c.text)}</div>`).join("") || '<p class="muted">市场事件中的自由对话会显示在这里。</p>'}<button data-do="bonds">返回核心团队</button>`);
+  }
+  function careerAssessment() {
+    const scores = { trend: 0, value: 0, defense: 0, research: 0 }, reasons = { trend: [], value: [], defense: [], research: [] }, roleMap = { tech: "trend", finance: "value", risk: "defense", ai: "research" };
+    for (const e of s.evidence.filter((e) => e.dimension === "attribute")) { if (scores[e.value] === undefined) continue; scores[e.value] += e.source === "city_build" ? 2 : 3; reasons[e.value].push(e.source === "city_build" ? "建设了对应策略总部" : "多次选择对应市场路径"); }
+    for (const e of s.evidence.filter((e) => e.dimension === "money_style")) {
+      if (e.value === "集中投入") { scores.trend += 1; reasons.trend.push("更愿意集中资金抓住机会"); }
+      if (e.value === "分批尝试") { scores.value += 1; reasons.value.push("习惯分批验证再增加投入"); }
+      if (e.value === "保留现金" || e.value === "小额试水") { scores.defense += 1; reasons.defense.push("经常保留现金或小额试水"); }
+      if (e.value === "先买信息") { scores.research += 1; reasons.research.push("愿意先花资源补充信息"); }
+    }
+    for (const [id, value] of Object.entries(s.affection || {})) { const type = roleMap[id]; if (type && value) { scores[type] += value; reasons[type].push(`与${G.people.find((p) => p.id === id).name}互动好感 ${value >= 0 ? "+" : ""}${value}`); } }
+    const knowledge = knowledgeStatus(), maturity = knowledge.answered < 2 ? "方向初判" : knowledge.accuracy >= 75 ? "进阶" : "基础";
+    const ranked = Object.keys(scores).sort((a, b) => scores[b] - scores[a]);
+    return { recommended: ranked[0], scores, reasons, knowledge, maturity, uncertain: scores[ranked[0]] - scores[ranked[1]] < 3 };
   }
   const statusNames = {
     unknown: "未观察",
@@ -545,17 +571,18 @@
     return `<div class="grid2"><div class="panel"><span class="badge">内置演示资源 · 免费</span><h3 style="margin-top:12px">${title}</h3><p class="muted">因为你选择了「${s.goal}」。前置条件：无；形式：讲解 + 小实验；无需平台权限。</p><button data-do="resource" data-concept="${concept}">开始学习 →</button><button class="quiet small" data-do="feedback" data-id="${title}">${s.resourceFeedback.includes(title) ? "已记为不适合" : "不适合我"}</button></div><div class="panel"><span class="badge">内置演示资源 · 免费</span><h3 style="margin-top:12px">净收益与成本工作台</h3><p class="muted">本局所有行动都有成本。${s.lessons.includes("交易成本") ? "你已学过，可再次巩固。" : "这个练习可补齐未验证的成本概念。"}前置条件：无。</p><button data-do="resource" data-concept="交易成本">打开工作台 →</button></div></div><small>Panda 平台目录尚未接入。这里提供可立即使用的内置学习资源，没有虚构真实课程链接。</small>`;
   }
   function careerPanel() {
-    const a = currentAnalysis(),
-      recommended = a.recommendedCareer || "research",
+    const assessment = careerAssessment(),
+      recommended = assessment.recommended,
       jobs = {
-        trend: { name: "趋势交易员", product: "趋势信号 AI Skill" },
-        value: { name: "价值投资员", product: "价值策略库" },
-        defense: { name: "风险管理师", product: "低波动与仓位控制策略库" },
-        research: { name: "量化研究员", product: "因子研究库" },
+        trend: { name: "趋势交易员", desc: "看见价格形成方向后跟随，但会先定好退出位置。", product: "趋势信号 AI Skill" },
+        value: { name: "价值投资员", desc: "先判断东西值不值，再分批投入并等待价值兑现。", product: "价值策略库" },
+        defense: { name: "风险管理师", desc: "先控制最坏结果，保留现金，再寻找下一次机会。", product: "低波动与仓位控制策略库" },
+        research: { name: "量化研究员", desc: "先查数据、做验证，再把想法变成可以重复检查的规则。", product: "因子研究库" },
       };
     if (s.career) return `<section class="career-panel"><div class="eyebrow">当前职业 · 第 ${s.season || 1} 赛季</div><h2>${s.career === "chairman" ? "董事长" : jobs[s.career].name}</h2><p>职业已经保留。金币、城区、材料、角色等级和历史画像都会带进下一赛季。</p><button class="primary" data-do="careerChoice" data-id="${s.career}">继续下一赛季 →</button></section>`;
-    return `<section class="career-panel"><div class="eyebrow">序章完成 · 可以转职</div><h2>推荐职业：${jobs[recommended].name}</h2><p>推荐产品：${jobs[recommended].product}。你可以接受推荐、改选其他职业，也可以继续当董事长。</p><div class="career-grid">${Object.entries(jobs)
-      .map(([id, j]) => `<button class="${id === recommended ? "recommended" : ""}" data-do="careerChoice" data-id="${id}"><small>${id === recommended ? "画像推荐" : "可选择"}</small><b>${j.name}</b><span>${j.product}</span></button>`)
+    const reason = [...new Set(assessment.reasons[recommended])].slice(0, 3).join("；") || "目前记录较少，先按已有选择推荐";
+    return `<section class="career-panel"><div class="eyebrow">第 4 天 · 综合职业画像</div><h2>最贴近：${assessment.maturity} · ${jobs[recommended].name}</h2><p>${jobs[recommended].desc}</p><p><b>为什么：</b>${reason}。</p><div class="career-score-grid">${Object.entries(jobs).map(([id, j]) => `<span class="${id === recommended ? "top" : ""}"><b>${assessment.scores[id]}</b><small>${j.name}</small></span>`).join("")}</div><div class="notice"><b>知识水平：</b>${assessment.knowledge.level}（答对 ${assessment.knowledge.correct}/${assessment.knowledge.answered || 0}）。知识题决定“基础 / 进阶”，不会因为答题多就把你硬判成研究员。</div><p class="muted">综合市场决策、投入风格、策略建设、知识题和角色互动。${assessment.uncertain ? "前两名分数接近，这只是当前最贴近方向，不是固定结论。" : "当前证据较集中，但职业仍由你最终选择。"} 好感表示你认同某种工作方式，不等于专业能力。</p><p>推荐产品：${jobs[recommended].product}。你可以接受推荐、改选其他职业，也可以继续当董事长。</p><div class="career-grid">${Object.entries(jobs)
+      .map(([id, j]) => `<button class="${id === recommended ? "recommended" : ""}" data-do="careerChoice" data-id="${id}"><small>${id === recommended ? "画像推荐" : "可选择"}</small><b>${j.name}</b><span>${j.desc}</span><span>${j.product}</span></button>`)
       .join("")}</div><button class="quiet" data-do="careerChoice" data-id="chairman">暂不转职，继续当董事长</button></section>`;
   }
   function summary() {
@@ -910,6 +937,20 @@
         case "partnerDetail":
           partnerDetail(Number(d.id));
           break;
+        case "partnerAnswer": {
+          const index = Number(d.id), p = G.people[index], scene = partnerScenes[p.id], answer = scene?.answers[Number(d.value)], key = partnerKey(p.id);
+          if (!answer || s.partnerTalks?.[key]) throw Error("今天已经和这位伙伴互动过了");
+          s.affection ||= { ai: 0, risk: 0, tech: 0, finance: 0 };
+          s.partnerTalks ||= {};
+          s.affection[p.id] = Math.max(-9, Math.min(30, (s.affection[p.id] || 0) + answer.delta));
+          s.partnerTalks[key] = { partner: p.id, day: Math.min(3, G.gameDay(s)), season: s.season || 1, delta: answer.delta, answer: answer.text, reply: answer.reply };
+          G.evidence(s, "bond", `${p.id}:${answer.delta}`, "partner_interaction", "during", false, key);
+          s.profileVersion++;
+          save();
+          partnerDetail(index);
+          toast(answer.delta > 0 ? `${p.name}好感 +${answer.delta}` : answer.delta < 0 ? `${p.name}好感 ${answer.delta}` : "本次好感不变");
+          break;
+        }
         case "profile":
           open("本局画像证据", profileBody());
           break;

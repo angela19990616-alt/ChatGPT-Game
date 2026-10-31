@@ -203,6 +203,8 @@
       knowledgeAttempts: [],
       knowledgeUnlocks: {},
       chats: [],
+      affection: { ai: 0, risk: 0, tech: 0, finance: 0 },
+      partnerTalks: {},
       npc: 0,
       prompted: [],
       resourceFeedback: [],
