@@ -1,4 +1,2 @@
-// Portable Worker source only; not an officially packaged Sites deployment.
-// Parent must migrate the existing Site through its official Worker starter/helper.
 import {handleApi,auth} from './api.mjs';
-export default {async fetch(request,env){if(!auth(request,env))return new Response('Authentication required',{status:401,headers:{'www-authenticate':'Basic realm="Panda City"'}});if(new URL(request.url).pathname.startsWith('/api/'))return handleApi(request,env);return env.ASSETS.fetch(request);}};
+export default {async fetch(request,env){if(!auth(request,env))return new Response('Authentication required',{status:401,headers:{'www-authenticate':'Basic realm="Panda City"'}});const url=new URL(request.url);if(url.pathname.startsWith('/api/')){if(request.method==='POST'&&env.AI_RATE_LIMITER){const actor=request.headers.get('cf-connecting-ip')||'unknown',result=await env.AI_RATE_LIMITER.limit({key:actor+':'+url.pathname});if(!result.success)return new Response(JSON.stringify({error:'rate_limited'}),{status:429,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}});}return handleApi(request,env);}return env.ASSETS.fetch(request);}};

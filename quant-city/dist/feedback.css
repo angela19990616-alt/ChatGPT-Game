@@ -161,12 +161,16 @@
 .career-panel{margin:24px 0;padding:22px;border:2px solid #d2ba7e;border-radius:16px;background:linear-gradient(135deg,#fff8df,#eef3df)}.career-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:16px 0}.career-grid button{min-height:105px;text-align:left;display:flex;flex-direction:column;gap:5px}.career-grid button b{font-size:17px}.career-grid button span{font-size:11px;color:#6d7a6c}.career-grid .recommended{border-color:#b57a28;background:#f4dfaa;box-shadow:0 3px 0 #c19a54}@media(max-width:520px){.career-grid{grid-template-columns:1fr}.career-grid button{min-height:82px}}
 
 /* Decision screen: keep all four choices visible without fighting the portrait/dialogue. */
+#toast[popover]{position:fixed;inset:auto auto max(22px,env(safe-area-inset-bottom)) 50%;margin:0;transform:translateX(-50%);z-index:2147483647;max-width:min(88vw,560px);width:max-content;text-align:center;pointer-events:none}
+.event-game .concept-help{display:block;width:100%;margin:4px 0 7px;padding:6px 9px;border:1px dashed #9b8d67;background:#fff9e8;color:#40594e;font-size:11px;text-align:left;box-shadow:none}
+.glossary-card p{line-height:1.75}.course-cta{display:block;margin-top:16px;padding:12px 14px;border-radius:10px;background:#496f61;color:#fff8dc;text-decoration:none;font-weight:700}
 .event-game .eventcard:not(.receipt){top:76px;bottom:218px;left:auto;right:clamp(24px,7vw,110px);width:min(440px,calc(50% - 20px));max-height:none;overflow:auto;padding:14px 16px}.event-game .eventcard:not(.receipt) .event-illustration{height:42px;margin:7px auto}.event-game .eventcard:not(.receipt) .event-illustration .ico{width:34px;height:34px}.event-game .eventcard:not(.receipt) h2{font-size:21px;margin:7px 0}.event-game .eventcard:not(.receipt)>p{margin-bottom:7px;line-height:1.55}.event-game .eventcard:not(.receipt) .notice{margin:7px 0;padding:7px 9px;line-height:1.5}.event-game .eventcard:not(.receipt) .rules{margin:4px 0 7px}.event-game .gamechoices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.event-game .gamechoices button{min-height:58px;padding:8px 9px;flex-direction:column;align-items:flex-start;justify-content:center;text-align:left;line-height:1.25}.event-game .gamechoices small{margin:4px 0 0;white-space:normal}.event-game .choice-type{font-size:10px;color:#7a6544;font-style:normal;font-weight:700}.event-game .vn-character{left:calc(50% - 540px);width:480px;opacity:.82}
 
 @media(max-width:700px){
   .event-game{background:linear-gradient(180deg,#79aaa5,#a9c6ae)}
   .event-game .event-shade{background:#264b4438;backdrop-filter:blur(4px)}
-  .event-game .vn-character{display:block;left:auto;right:-12px;bottom:142px;width:190px;height:290px;opacity:.82;z-index:1}
+  .event-game .vn-character{display:block;left:auto;right:18px;bottom:155px;width:92px;height:128px;opacity:1;z-index:6;overflow:hidden;border:3px solid #f7e8bd;border-radius:46px 46px 14px 14px;background:linear-gradient(#8fb5aa,#d7dec4);box-shadow:0 5px 0 #738c78,0 12px 25px #1f49453d}
+  .event-game .vn-character .large-portrait{width:100%;height:100%;object-fit:cover;object-position:50% 8%;filter:none;transform:scale(2.35);transform-origin:50% 12%}
   .event-game .partner-switch{display:none}
   .event-game .backcity{top:57px;left:10px;z-index:9;padding:5px 9px;background:#fff8e8ef}
   .event-game .eventcard:not(.receipt){top:96px;right:10px;bottom:198px;left:10px;width:auto;max-width:none;max-height:none;padding:10px 11px;border-width:3px;border-radius:13px;box-shadow:0 5px 0 #8f9679,0 14px 35px #183c3340}
@@ -203,4 +207,6 @@
 .event-game .eventcard:not(.receipt){bottom:auto;max-height:calc(100dvh - 300px)}
 @media(max-width:700px){.event-game .eventcard:not(.receipt){bottom:auto;max-height:calc(100dvh - 300px)}}
 @media(max-width:380px),(max-height:680px){.event-game .eventcard:not(.receipt){bottom:auto;max-height:calc(100dvh - 250px)}}
+.event-game .eventcard:not(.receipt)>p{display:block;-webkit-line-clamp:unset;-webkit-box-orient:initial;overflow:visible}
+@media(max-width:700px){.event-game .card-reveal,.event-game .vn-character,.event-game .large-portrait{animation:none!important}}
 .measurement{margin:18px 0;padding:16px;border-radius:14px;background:#edf2e3}.measurement-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.measurement-grid article{padding:12px 10px;border:1px solid #cad3b8;border-radius:10px;background:#fffaf0}.measurement-grid small,.measurement-grid b{display:block}.measurement-grid b{margin:4px 0;font-size:16px}.measurement-grid p{margin:0;font-size:10px;color:#6d7a6c}@media(max-width:700px){.measurement-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}

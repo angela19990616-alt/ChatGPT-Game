@@ -31,7 +31,7 @@ npm start
 - 每个市场事件属于一条策略线并由对应职业主讲：量化研究员代表先调查、风险管理师代表保留现金、趋势交易员代表上涨跟进、价值投资员代表低位试买。
 - 局末按“跟投 2 点、先研究 1 点、放弃 0 点”展示本局策略偏好与最接近的角色；这是游戏行为总结，不是现实投资能力测评。
 
-## DeepSeek（尚未真实接通）
+## DeepSeek
 
 复制 `.env.example` 为 `.env`。仅在自己授权预算后设置 `DEEPSEEK_API_KEY`、`ENABLE_PAID_AI=true`，再启动服务。浏览器设置 → 剧情AI设置 → 明确同意后开启；每次刷新默认回到本地模式。不要在前端或聊天输入密钥。
 
@@ -43,6 +43,20 @@ npm start
 
 图像是独立接口，当前无图像供应商或密钥，只返回固定角色图占位及任务状态。没有收费调用。
 
+## Cloudflare 线上 AI 版
+
+`wrangler.jsonc` 会把 `dist` 静态 H5 与 `server/worker.mjs` 部署为同站 Worker。只有 `/api/*` 进入 Worker；AI Key 与会话签名只存为 Cloudflare Secret，不会进入前端或 Git。公开 API 另有 Cloudflare 限流绑定（每个来源、每条 API 路径每分钟 12 次）及应用内会话限流。
+
+首次部署前，在已经登录 Cloudflare 的终端执行：
+
+```sh
+npx wrangler secret put DEEPSEEK_API_KEY
+npx wrangler secret put SESSION_SECRET
+npx wrangler deploy
+```
+
+`SESSION_SECRET` 应使用独立随机值，不要复用 API Key。若启用 ElevenLabs，再分别配置服务端 Secret 和 Voice ID。线上玩家仍需在游戏设置中主动同意并开启“剧情 AI”，否则保持本地规则模式。静态 GitHub Pages 版不具备服务端 AI；应把对外试玩链接指向 Worker 部署地址。
+
 ## 验证与交接
 
 ```sh
@@ -51,4 +65,4 @@ npm run check
 npm run pack
 ```
 
-阅读 `CODEX_HANDOFF.md` 和 `TEST-REPORT.md`。自动化浏览器验收受环境策略限制，因此尚未验证真实画面或手机布局。仓库含四张原始人物PNG；单文件离线HTML可由 `npm run pack` 完整重建，不重复提交大体积生成文件。`dist/assets/ASSETS.md`记录对应关系。运行 `node tests/package.cjs` 可复验素材和脚本。游戏不会用emoji替代人物。
+阅读 `CODEX_HANDOFF.md` 和 `TEST-REPORT.md`。手机 390×844 视口已经完成真实浏览器验收；自动测试覆盖完整三日九轮、金额比例、术语解释、顶层提示、画像、转职、AI API 和 Worker 限流。仓库含四张原始人物PNG；单文件离线HTML可由 `npm run pack` 完整重建，不重复提交大体积生成文件。`dist/assets/ASSETS.md`记录对应关系。运行 `node tests/package.cjs` 可复验素材和脚本。游戏不会用emoji替代人物。
