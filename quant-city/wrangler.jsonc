@@ -4,6 +4,9 @@
   "main": "server/worker.mjs",
   "compatibility_date": "2026-10-31",
   "workers_dev": true,
+  "routes": [
+    { "pattern": "quant-game.angela-tech.com", "custom_domain": true }
+  ],
   "vars": {
     "ENABLE_PAID_AI": "true",
     "PUBLIC_AI": "true",
