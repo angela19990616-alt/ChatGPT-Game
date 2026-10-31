@@ -250,19 +250,17 @@
     if (action === "report") return { action, amount: 0, fee: 0, report: 50 };
     if (!["small", "full", "custom"].includes(action)) throw Error("不支持的行动");
     const a = amount === undefined ? (action === "small" ? Math.floor(e.amount / 2) : e.amount) : amount;
-    if (!Number.isInteger(a) || a < 1 || a > e.amount) throw Error("请输入 1–" + e.amount + " 的整数投入");
+    if (!Number.isInteger(a) || a < 1) throw Error("请输入正整数投入金额");
     return { action, amount: a, fee: Math.ceil(a / 100), report: 0 };
   }
   function gameDay(s) {
     return Math.floor(s.round / CONFIG.roundsPerDay) + 1;
   }
   function spendingLocked(s) {
-    const day = gameDay(s);
-    return Boolean(s.spendingLockDay === day || (s.spendingWarning && day === 1));
+    return false;
   }
   function proposal(s, action, amount, reason = "") {
     if (s.phase !== "event") throw Error("当前无法提交行动");
-    if (spendingLocked(s) && ["full", "small", "custom"].includes(action)) throw Error("今天投入过猛，今天剩余投资选项已进入资金纪律限制");
     const a = spec(s.event, action, amount);
     if (a.amount + a.fee + a.report > s.balance) throw Error("可用现金不足，请选择较小金额或不投资");
     return {
@@ -356,7 +354,10 @@
     };
     s.ledger.push(entry);
     s.balance = entry.balanceAfter;
-    if (day === 1 && s.ledger.filter((x) => x.event && Math.floor((Number(x.eventId.match(/e(\d+)$/)?.[1]) || 0) / CONFIG.roundsPerDay) + 1 === 1).reduce((n, x) => n + x.debit, 0) > s.initial * 0.6) s.spendingLockDay = day;
+    delete s.spendingLockDay;
+    delete s.spendingWarning;
+    s.bankrupt = s.balance <= 0;
+    if (s.bankrupt) s.phase = "bankrupt";
     s.xp += CONFIG.xpPerEvent;
     if (a.reason.trim().length >= 4) observe(s, "ai", a.reason, false);
     evidence(s, "allocation", Math.round((a.amount / Math.max(1, Math.abs(before))) * 100) + "% 投入；可用现金 " + s.balance + " 币", "observed_action", "during", false);
@@ -365,7 +366,7 @@
     evidence(s, "decision_style", decisionStyle, "observed_action", "during", false);
     if (attribute) evidence(s, "attribute", attribute, "observed_action", "during", false);
     evidence(s, "strategy", s.event.strategy + ":" + (a.amount ? "follow" : a.report ? "study" : "pass"), "observed_action", "during", false);
-    s.phase = "result";
+    if (!s.bankrupt) s.phase = "result";
     s.draft = null;
     s.version++;
     return entry;

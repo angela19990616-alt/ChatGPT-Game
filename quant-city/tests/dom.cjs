@@ -46,6 +46,7 @@ const q = (s) => w.document.querySelector(s),
   input("#nickname", "<img>总");
   submit("#start");
   assert.ok(q(".vn-dialogue").textContent.includes("第一封市场来信"));
+  assert.ok(q("[data-do=skipTutorial]"), "tutorial should always offer a visible skip action");
   assert.ok(!q(".vn-dialogue").textContent.includes("<img>总"));
   assert.equal(q(".vn-dialogue img"), null);
   assert.equal(state().tutorial, "draw");
@@ -63,9 +64,9 @@ const q = (s) => w.document.querySelector(s),
   assert.equal(state().tutorial, "decision");
   assert.equal(state().npc, 3);
   assert.ok(q(".eventcard").textContent.includes("价值低吸"));
-  assert.ok(q(".eventcard").textContent.includes("价值 +1"));
-  assert.ok(q(".eventcard").textContent.includes("研究 +1"));
-  assert.ok(q(".eventcard").textContent.includes("防守 +1"));
+  assert.ok(q(".eventcard").textContent.includes("自定金额投入"));
+  assert.ok(q(".eventcard").textContent.includes("先查资料"));
+  assert.ok(q(".eventcard").textContent.includes("不投"));
   reload();
   assert.ok(q("[data-do=choose]"));
   click("[data-do=choose][data-id=small]");
@@ -97,6 +98,16 @@ const q = (s) => w.document.querySelector(s),
   assert.ok(q(".game-dock"));
   assert.equal(state().round, 1);
   assert.equal(state().tutorial, "done");
+  click("[data-do=warehouse]");
+  assert.equal(w.document.querySelectorAll(".strategy-family").length, 4);
+  assert.match(q("#modal").textContent, /趋势决策/);
+  assert.match(q("#modal").textContent, /价值决策/);
+  assert.match(q("#modal").textContent, /防守决策/);
+  assert.match(q("#modal").textContent, /研究决策/);
+  assert.ok([...w.document.querySelectorAll(".panda-actions a")].some((a) => /docs\/strategy/.test(a.href)));
+  assert.ok([...w.document.querySelectorAll(".panda-actions a")].some((a) => /quantfactor-center/.test(a.href)));
+  assert.ok([...w.document.querySelectorAll(".panda-actions a")].some((a) => /docs\/qube/.test(a.href)));
+  click("[data-do=close]");
   click("[data-do=cycle]");
   q("#modal").dispatchEvent(new w.Event("cancel"));
   q("#modal").close();

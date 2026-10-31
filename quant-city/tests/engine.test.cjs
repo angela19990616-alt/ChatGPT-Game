@@ -54,24 +54,25 @@ test("malformed amounts and spending beyond available cash are rejected", () => 
   assert.throws(() => G.proposal(s, "custom", Infinity));
   assert.throws(() => G.proposal(s, "custom", 1.5));
 });
-test("overspending lock only affects the current day and clears after next-day return", () => {
-  const s = G.fresh("A", false, "探索基础", 10000, 3);
+test("each round accepts a new amount while cash remains; exhausting cash causes bankruptcy", () => {
+  const s = G.fresh("A", false, "探索基础", 10100, 3);
   G.draw(s);
-  Object.assign(s.event, { amount: 8000, fee: 80 });
-  G.settle(s, G.proposal(s, "full"));
-  assert.equal(s.spendingLockDay, 1);
-  const points = s.evidence.filter((e) => e.dimension === "attribute").length;
+  G.settle(s, G.proposal(s, "custom", 5000));
+  assert.equal(G.spendingLocked(s), false);
   G.next(s);
   G.draw(s);
-  assert.throws(() => G.proposal(s, "small"), /资金纪律限制/);
-  assert.equal(s.evidence.filter((e) => e.dimension === "attribute").length, points);
-  s.round = 3;
-  s.phase = "daybreak";
-  G.startDay(s);
-  assert.equal(G.gameDay(s), 2);
-  assert.equal(G.spendingLocked(s), false);
+  assert.doesNotThrow(() => G.proposal(s, "custom", 5000));
+  G.settle(s, G.proposal(s, "custom", 5000));
+  assert.equal(s.balance, 0);
+  assert.equal(s.phase, "bankrupt");
+  assert.equal(s.bankrupt, true);
+});
+test("not investing never creates a bankruptcy", () => {
+  const s = G.fresh("A", false, "探索基础", 100, 3);
   G.draw(s);
-  assert.doesNotThrow(() => G.proposal(s, "small"));
+  G.settle(s, G.proposal(s, "skip"));
+  assert.equal(s.balance, 100);
+  assert.equal(s.phase, "result");
 });
 test("investment is frozen today and returned on the next day", () => {
   const s = G.fresh("A", false, "探索基础", 10000, 1);
@@ -240,18 +241,21 @@ test("knowledge level is separate from preference and recommendations map to Pan
   assert.ok(a.recommendations.some((r) => r.resource_id === "strategy-value"));
   assert.ok(a.recommendations.every((r) => r.next_task));
 });
-test("district revenue is fixed and explained before settlement", () => {
+test("district revenue grows with investment but has diminishing returns", () => {
   const s = G.fresh("固定收益", false, "探索基础", 10000, 77);
   C.init(s);
   G.evidence(s, "attribute", "trend");
   C.build(s, "trend", ["momentum"], 1000);
   const first = C.returns(s.city.districts[0], C.market(1, 1)),
-    second = C.returns(s.city.districts[0], C.market(999, 9));
-  assert.equal(first.gross, second.gross);
-  assert.equal(first.gross, 180);
+    second = C.returns({ ...s.city.districts[0], budget: 4000 }, C.market(999, 9));
+  assert.ok(second.gross > first.gross);
+  assert.ok(second.gross < first.gross * 4, "income should grow with diminishing returns");
   const draft = C.draft(s);
-  assert.equal(draft.amount, 180);
+  assert.equal(draft.amount, first.gross);
   assert.equal(draft.fees, 0);
+  C.refit(s, "trend", [], 500);
+  assert.equal(s.city.districts[0].floors, 1);
+  assert.equal(s.city.districts[0].budget, 1500);
 });
 test("career transfer starts a new season without losing progression or reusing daily limits", () => {
   const s = G.fresh("转职", false, "探索基础", 10000, 88);

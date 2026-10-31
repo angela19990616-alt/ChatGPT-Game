@@ -125,7 +125,7 @@
   }
   function intro() {
     s = null;
-    app.innerHTML = `<main class="game opening">${world()}<div class="opening-shade"></div><div class="chapter-stamp">第一章<small>海风吹来的任命书</small></div>${character()}${speech("船快靠岸了。这里的每一块空地，都在等一个新的想法。<br>让我看看任命书……您就是新来的董事长？", '<button class="primary" data-do="askName">继续 ' + CityArt.icon("arrow") + "</button>")}<button class="skip-dialogue" data-do="askName">跳过对白</button>${foot()}</main>`;
+    app.innerHTML = `<main class="game opening">${world()}<div class="opening-shade"></div><div class="chapter-stamp">第一章<small>你的量化董事会</small></div>${character()}${speech(`<b>先用 30 秒看懂怎么玩：</b><br>① 连续 3 天，每天处理 3 封市场来信，选择投入、不投或先查资料。<br>② 抽区域蓝图和策略卡：蓝图用来解锁地块，每张策略卡可给大楼增加一层。<br>③ AI 会根据你的金额和理由解释当轮风格；第 4 天生成策略画像和 PandaAI 学习建议。<br><small>金币由程序结算，不是真实投资或收益保证。</small>`, '<button class="primary" data-do="askName">我懂了，开始玩 ' + CityArt.icon("arrow") + "</button>")}<button class="skip-dialogue" data-do="askName">跳过玩法说明</button>${foot()}</main>`;
   }
   function askName() {
     app.innerHTML = `<main class="game opening">${world()}<div class="opening-shade"></div>${character()}<section class="vn-dialogue name-dialogue"><div class="nameplate">量化研究员<small>新手引导</small></div><p>请告诉我您的名字。接下来，大家统一称呼您为“董事长”。</p><form id="start"><div class="nameentry"><input id="nickname" maxlength="12" placeholder="输入你的名字" autocomplete="off" aria-label="董事长姓名"></div><label class="savechoice"><input id="persist" type="checkbox" checked> 保存到这台设备</label><small class="privacyline">名字、对话和选择只用于本局，可查看、纠正或清除。</small><button class="primary" type="submit">以董事长身份进入 →</button></form></section>${foot()}</main>`;
@@ -172,7 +172,7 @@
         defense: "防守",
         research: "研究",
       }[s.ledger.at(-1)?.attribute];
-    app.innerHTML = `<main class="game event-game">${world()}${hud()}<div class="event-shade"></div>${character(p)}${!tutorial ? `<button class="backcity" data-do="city">‹ 返回城市</button><div class="partner-switch">${G.people.map((p, i) => `<button data-do="npc" data-id="${i}" class="${s.npc === i ? "selected" : ""}" aria-label="切换到${p.name}">${art(p, "partner-face")}</button>`).join("")}</div>` : ""}${eventPanel()}${speech(s.phase === "result" ? `<b>${attr} +1</b><br>这次选择记下了。` : tutorial ? `第一封市场来信到了。<br>${s.phase === "event" ? "先看可能会赚多少、亏多少，再选投入、不投或先查资料。" : "点卡片，看看今天发生了什么。"}` : last ? esc(last.text) : dialogue(p), s.phase === "result" ? `<button class="primary" data-do="${tutorial ? "tutorialReward" : "next"}">${tutorial ? "领取开城物资" : s.round === G.CONFIG.rounds - 1 ? "看最终画像" : (s.round + 1) % G.CONFIG.roundsPerDay === 0 ? "结束今天" : "下一轮"} →</button>` : s.phase === "ready" || s.phase === "drawing" ? "" : `<div class="hintrow"><button data-do="ask" data-kind="risk">问风险</button><button data-do="ask" data-kind="tech">问依据</button><button data-do="ask" data-kind="finance">问费用</button><button data-do="lesson">没听懂</button></div>${tutorial ? "" : `<form id="chat" class="chatrow"><input id="message" maxlength="250" aria-label="和角色讨论" placeholder="说说你的想法…"><button type="submit">发送</button></form>`}`, p)}${foot()}</main>`;
+    app.innerHTML = `<main class="game event-game">${world()}${hud()}${tutorial ? '<button class="tutorial-skip" data-do="skipTutorial">跳过教程</button>' : ""}<div class="event-shade"></div>${character(p)}${!tutorial ? `<button class="backcity" data-do="city">‹ 返回城市</button><div class="partner-switch">${G.people.map((p, i) => `<button data-do="npc" data-id="${i}" class="${s.npc === i ? "selected" : ""}" aria-label="切换到${p.name}">${art(p, "partner-face")}</button>`).join("")}</div>` : ""}${eventPanel()}${speech(s.phase === "result" ? `<b>${attr} +1</b><br>这次选择记下了。` : tutorial ? `第一封市场来信到了。<br>${s.phase === "event" ? "先看可能会赚多少、亏多少，再选投入、不投或先查资料。" : "点卡片，看看今天发生了什么。"}` : last ? esc(last.text) : dialogue(p), s.phase === "result" ? `<button class="primary" data-do="${tutorial ? "tutorialReward" : "next"}">${tutorial ? "领取开城物资" : s.round === G.CONFIG.rounds - 1 ? "看最终画像" : (s.round + 1) % G.CONFIG.roundsPerDay === 0 ? "结束今天" : "下一轮"} →</button>` : s.phase === "ready" || s.phase === "drawing" ? "" : `<div class="hintrow"><button data-do="ask" data-kind="risk">问风险</button><button data-do="ask" data-kind="tech">问依据</button><button data-do="ask" data-kind="finance">问费用</button><button data-do="lesson">没听懂</button></div>${tutorial ? "" : `<form id="chat" class="chatrow"><input id="message" maxlength="250" aria-label="和角色讨论" placeholder="说说你的想法…"><button type="submit">发送</button></form>`}`, p)}${foot()}</main>`;
     if ($("#chat"))
       $("#chat").onsubmit = (e) => {
         e.preventDefault();
@@ -201,7 +201,7 @@
   }
   function daybreak() {
     const day = Math.floor(s.round / G.CONFIG.roundsPerDay) + 1;
-    app.innerHTML = `<main class="game opening daybreak">${world()}<div class="opening-shade"></div>${character()}${speech(`<b>第 ${day} 天 · 昨日财报</b>${reportBody(day - 1)}${s.spendingLockDay === day - 1 || (s.spendingWarning && day === 2) ? '<div class="notice">昨天投入过猛，所以昨天剩余投资选项受限。今日资金返还后，投资选项已经恢复。</div>' : ""}`, `<button class="primary" data-do="startDay">确认财报并进入第 ${day} 天 →</button>`)}${foot()}</main>`;
+    app.innerHTML = `<main class="game opening daybreak">${world()}<div class="opening-shade"></div>${character()}${speech(`<b>第 ${day} 天 · 昨日财报</b>${reportBody(day - 1)}<div class="notice">今天仍可自由决定每轮投多少；可用现金不足时，可以少投、先查资料或不投。</div>`, `<button class="primary" data-do="startDay">确认财报并进入第 ${day} 天 →</button>`)}${foot()}</main>`;
     save();
   }
   function finalReport() {
@@ -210,7 +210,7 @@
   }
 
   function bankruptcy() {
-    app.innerHTML = `<main class="bankruptcy-screen"><div class="bankruptcy-crack">⚡</div><div class="bankruptcy-card"><small>余额 ${s.balance.toLocaleString()} 币</small><h1>破产了</h1><p>钱低于 0，本局直接结束。</p><button class="primary" data-do="new">重新来一局</button><button data-do="ledger">看账本</button></div></main>`;
+    app.innerHTML = `<main class="bankruptcy-screen"><div class="bankruptcy-crack">⚡</div><div class="bankruptcy-card"><small>余额 ${s.balance.toLocaleString()} 币</small><h1>资金耗尽，本局破产</h1><p>可用现金已经归零，无法继续下一轮决策。</p><button class="primary" data-do="new">重新来一局</button><button data-do="ledger">看账本</button></div></main>`;
     save();
   }
 
@@ -225,6 +225,11 @@
     };
     return names[event.strategy] || "自主投入";
   }
+  function maxInvestable(balance = s?.balance || 0) {
+    let amount = Math.max(0, Math.floor((balance * 100) / 101));
+    while (amount > 0 && amount + Math.ceil(amount / 100) > balance) amount--;
+    return amount;
+  }
   function eventPanel() {
     if (s.phase === "ready" || s.phase === "drawing") return `<div class="drawstage"><button class="sealedcard ${s.phase === "drawing" ? "cardspinning" : ""} ${s.event ? "rarity-" + s.event.rarity.toLowerCase() : ""}" data-do="${s.phase === "drawing" ? "reveal" : "draw"}" aria-label="抽取事件卡"><span class="seal-border"></span><span class="seal">✦</span><b>市场来信</b><small>${s.phase === "drawing" ? "点击翻开" : "点击抽取"}</small></button>${s.phase === "drawing" ? '<button class="cancel-draw" data-do="cancelDraw">先等等</button>' : '<div class="finger-guide">点击卡片开启</div>'}</div>`;
     const e = s.event,
@@ -233,7 +238,7 @@
       fullCost = e.amount + Math.ceil(e.amount / 100),
       smallAmount = Math.floor(e.amount / 2),
       smallCost = smallAmount + Math.ceil(smallAmount / 100),
-      locked = G.spendingLocked(s),
+      available = maxInvestable(),
       copy = e.choices || {
         full: "看好机会，买入较多",
         small: "先买少量，边走边看",
@@ -246,7 +251,7 @@
         risk = { full: "较高", small: "适中", skip: "较低", report: "中低" }[l.actionId];
       return `<article class="eventcard receipt"><div class="card-kicker">第 ${day} 天 · 第 ${turn}/3 轮</div><h2>${a}偏好 +1</h2><p>本次风险选择：${risk}</p><div class="receipt-value">−${l.debit}<small>今天先冻结</small></div><div class="receipt-detail">明天返还 ${l.credit}<br>现在还能用 ${s.balance}</div><button class="quiet small" data-do="ledger">看账单</button></article>`;
     }
-    return `<article class="eventcard card-reveal rarity-${e.rarity.toLowerCase()}"><div class="rarity-badge">${e.rarity}</div><div class="card-kicker">第 ${day} 天 · 第 ${turn}/3 轮 · 总进度 ${s.round + 1}/9</div><div class="event-illustration">${CityArt.icon(e.type === "成本" ? "coin" : "city")}<span>${e.strategyName}</span></div><h2>${esc(e.title)}</h2><p>${esc(e.story)}</p><div class="notice"><b>简单说：</b>${esc(e.fact)}</div><details class="rules"><summary>钱什么时候回来？</summary><p>今天投入的钱先冻结，第二天连同结果一起返还。第三天投入的钱会在最终画像前结算。</p></details><div class="gamechoices"><button data-do="choose" data-id="full" ${locked || fullCost > s.balance ? "disabled" : ""}><em class="choice-type">风险较高 · 趋势 +1</em>${esc(copy.full)}<small>${locked ? "今天投入较多，暂时不能再买" : fullCost > s.balance ? "钱不够" : e.amount + " 币 + 手续费"}</small></button><button data-do="choose" data-id="small" ${locked || smallCost > s.balance ? "disabled" : ""}><em class="choice-type">风险适中 · 价值 +1</em>${esc(copy.small)}<small>${locked ? "今天投入较多，暂时不能再买" : smallCost > s.balance ? "钱不够" : smallAmount + " 币 + 手续费"}</small></button><button data-do="choose" data-id="skip"><em class="choice-type">风险较低 · 防守 +1</em>${esc(copy.skip)}<small>不花钱，保留现金</small></button><button data-do="choose" data-id="report" ${50 > s.balance ? "disabled" : ""}><em class="choice-type">先补信息 · 研究 +1</em>${esc(copy.report)}<small>${50 > s.balance ? "钱不够" : "花 50 币查证"}</small></button></div></article>`;
+    return `<article class="eventcard card-reveal rarity-${e.rarity.toLowerCase()}"><div class="rarity-badge">${e.rarity}</div><div class="card-kicker">第 ${day} 天 · 第 ${turn}/3 轮 · 总进度 ${s.round + 1}/9</div><div class="event-illustration">${CityArt.icon(e.type === "成本" ? "coin" : "city")}<span>${e.strategyName}</span></div><h2>${esc(e.title)}</h2><p>${esc(e.story)}</p><div class="notice"><b>简单说：</b>${esc(e.fact)}</div><details class="rules"><summary>钱什么时候回来？</summary><p>今天投入的钱先冻结，第二天连同结果一起返还。第三天投入的钱会在最终画像前结算。</p></details><div class="gamechoices"><button data-do="choose" data-id="full" ${available < 1 ? "disabled" : ""}><em class="choice-type">自定金额投入</em>${esc(copy.full)}<small>${available < 1 ? "无可投资金" : "最多可投 " + available + " 币"}</small></button><button data-do="choose" data-id="small" ${available < 1 ? "disabled" : ""}><em class="choice-type">小额投入</em>${esc(copy.small)}<small>${available < 1 ? "无可投资金" : "金额可修改"}</small></button><button data-do="choose" data-id="skip"><em class="choice-type">不投</em>${esc(copy.skip)}<small>不花钱，保留现金</small></button><button data-do="choose" data-id="report" ${50 > s.balance ? "disabled" : ""}><em class="choice-type">先查资料</em>${esc(copy.report)}<small>${50 > s.balance ? "钱不够" : "花 50 币查证"}</small></button></div></article>`;
   }
 
   function open(title, body) {
@@ -300,13 +305,15 @@
   }
   function confirmAction(action, amount) {
     PandaAI.cancel();
-    s.draft = G.proposal(s, action, amount);
+    const limit = maxInvestable(),
+      initial = ["full", "small", "custom"].includes(action) ? Math.min(amount ?? s.event.amount, limit) : amount;
+    s.draft = G.proposal(s, action, initial);
     save();
     const a = s.draft,
       e = s.event,
       type = tradeType(a.action, a.amount, e),
       editable = a.amount > 0;
-    open("确认选择", `<div class="trade-type"><b>${type} +1</b></div>${editable ? `<label for="investAmount">这次想投入多少？（1–${Math.min(e.amount, s.balance - 1)} 游戏币）</label><input id="investAmount" type="number" min="1" max="${Math.min(e.amount, s.balance - 1)}" step="100" value="${a.amount}"><input id="investSlider" type="range" min="1" max="${Math.min(e.amount, s.balance - 1)}" step="100" value="${a.amount}">` : ""}<div class="facts" id="investOutcome">${a.report ? "花 50 币先查信息，这轮不买。" : a.amount ? "正在计算可能结果…" : "这轮不花钱，保留全部现金。"}</div><p class="muted">新手提示：先看“最多可能亏多少”，再决定投入。今天投入，第二天看游戏行情结果；这不是真实收益保证。</p><label for="reason">为什么这样选（可不填）</label><textarea id="reason" maxlength="300" placeholder="例如：先小额试试，不想一次投太多"></textarea><div class="actions" style="margin-top:15px"><button class="primary" data-do="confirm">就这么选</button><button data-do="close">返回</button></div>`);
+    open("确认选择", `<div class="trade-type"><b>${type} +1</b></div>${editable ? `<label for="investAmount">这次想投入多少？（1–${limit} 游戏币）</label><input id="investAmount" type="number" min="1" max="${limit}" step="1" value="${a.amount}"><input id="investSlider" type="range" min="1" max="${limit}" step="1" value="${a.amount}">` : ""}<div class="facts" id="investOutcome">${a.report ? "花 50 币先查信息，这轮不买。" : a.amount ? "正在计算可能结果…" : "这轮不花钱，保留全部现金。"}</div><p class="muted">新手提示：先看“最多可能亏多少”，再决定投入。如果现金和手续费全部耗尽，本局直接进入破产结局。</p><label for="reason">为什么这样选（可不填）</label><textarea id="reason" maxlength="300" placeholder="例如：先小额试试，不想一次投太多"></textarea><div class="actions" style="margin-top:15px"><button class="primary" data-do="confirm">就这么选</button><button data-do="close">返回</button></div>`);
     if (editable) {
       $("#investAmount").oninput = () => {
         if ($("#investSlider")) $("#investSlider").value = $("#investAmount").value;
@@ -433,7 +440,7 @@
     if (invest && !card.dataset.simpleChoices) {
       card.dataset.simpleChoices = "true";
       invest.dataset.id = "custom";
-      invest.innerHTML = `<em class="choice-type">投入 · 金额由你决定</em>看好这个机会，自己填写投入金额<small>上限 ${s.event.amount} 币</small>`;
+      invest.innerHTML = `<em class="choice-type">投入 · 金额由你决定</em>看好这个机会，自己填写投入金额<small>当前最多可投 ${maxInvestable()} 币</small>`;
       small?.remove();
       if (skip) skip.innerHTML = '<em class="choice-type">不投 · 保留现金</em>这次不投入<small>不会扣钱</small>';
       if (report) report.innerHTML = '<em class="choice-type">先查资料 · 研究</em>先看资料再决定<small>花 50 币查证</small>';
@@ -629,7 +636,7 @@
       call(() => {
         const a = GameCity.draft(s);
         s.city.pending = a;
-        open("领取今日建设收益", `<p>已建城区每天产生固定经营收入。领取后当天不能重复领取。</p><div class="numbers"><div><small>今日固定收入</small><strong>+${a.amount}</strong></div><div><small>运营费用</small><strong>0</strong></div><div><small>领取后现金</small><strong>${s.balance + a.amount}</strong></div></div><p class="notice">这是城市经营玩法，不是投资收益模拟。真实股票和量化策略都不保证固定回报。</p><button class="primary" data-do="confirmCycle">确认领取</button><button data-do="close">取消</button>`);
+        open("领取今日建设收益", `<p>城区收益根据累计投入、策略楼层和建设度计算。领取后当天不能重复领取。</p><div class="numbers"><div><small>今日经营收入</small><strong>+${a.amount}</strong></div><div><small>运营费用</small><strong>0</strong></div><div><small>领取后现金</small><strong>${s.balance + a.amount}</strong></div></div><p class="notice">这是游戏内的城市经营收益：投入越多，收益基数越高，但会边际递减。不代表真实投资回报。</p><button class="primary" data-do="confirmCycle">确认领取</button><button data-do="close">取消</button>`);
       });
     }
   }
@@ -644,6 +651,15 @@
     if (s?.tutorial === "build" && d.do === "district" && d.id !== s.ledger.at(-1)?.attribute) return;
     call(() => {
       switch (d.do) {
+        case "skipTutorial":
+          clearTimeout(drawTimer);
+          clearTimeout(poolTimer);
+          s.tutorial = "done";
+          if (s.phase === "drawing") s.phase = "ready";
+          save();
+          render();
+          toast("已跳过新手教程，可随时点问号查看概念说明。");
+          break;
         case "startDay":
           G.startDay(s);
           save();
@@ -1130,7 +1146,7 @@
       target = s.ledger.at(-1)?.attribute || "trend",
       targetBlueprint = GameCity.blueprints.find((b) => b.id === target),
       feedback = c.feedback ? `<aside class="city-feedback"><b>${esc(c.feedback.title)}</b><p>${esc(c.feedback.text)}</p><button class="small" data-do="dismissFeedback">知道了</button></aside>` : "";
-    app.innerHTML = `<main class="game city-game ${s.tutorial === "build" ? "tutorial-build tutorial-" + target : ""}">${world(!t || s.tutorial === "build")}${hud()}${s.tutorial === "build" ? `<div class="tutorial-banner">你刚才选了${targetBlueprint.strategy}决策。现在建对应产业。<span>↓</span></div><div class="tutorial-objective">建${targetBlueprint.name} · ${targetBlueprint.strategy} +1</div>` : s.tutorial === "finish" ? `${character()}${speech(`${targetBlueprint.name}建好了。<br>${esc(c.feedback?.text || targetBlueprint.strategy + " +1。")}`, '<button class="primary" data-do="finishTutorial">继续玩 →</button>')}` : `<div class="island-name">量化董事会<small>${c.districts.length} / 4 个策略城区 · PandaAI 主题作品</small></div><button class="mail-float" data-do="board" aria-label="打开市场事件">${CityArt.icon("cards")}<i></i></button>${dock()}${feedback}`}<div class="ambient-leaf leaf1"></div><div class="ambient-leaf leaf2"></div>${foot()}</main>`;
+    app.innerHTML = `<main class="game city-game ${s.tutorial === "build" ? "tutorial-build tutorial-" + target : ""}">${world(!t || s.tutorial === "build")}${hud()}${t ? '<button class="tutorial-skip" data-do="skipTutorial">跳过教程</button>' : ""}${s.tutorial === "build" ? `<div class="tutorial-banner">你刚才选了${targetBlueprint.strategy}决策。现在建对应产业。<span>↓</span></div><div class="tutorial-objective">建${targetBlueprint.name} · ${targetBlueprint.strategy} +1</div>` : s.tutorial === "finish" ? `${character()}${speech(`${targetBlueprint.name}建好了。<br>${esc(c.feedback?.text || targetBlueprint.strategy + " +1。")}`, '<button class="primary" data-do="finishTutorial">继续玩 →</button>')}` : `<div class="island-name">量化董事会<small>${c.districts.length} / 4 个策略城区 · PandaAI 主题作品</small></div><button class="mail-float" data-do="board" aria-label="打开市场事件">${CityArt.icon("cards")}<i></i></button>${dock()}${feedback}`}<div class="ambient-leaf leaf1"></div><div class="ambient-leaf leaf2"></div>${foot()}</main>`;
     save();
   }
   function cardHall() {
@@ -1165,8 +1181,21 @@
     open(rarity + " 抽到了", `<div class="loot-reveal rarity-${rarity.toLowerCase()}"><div class="loot-icon">${CityArt.icon(pool === "strategy" ? "blueprint" : "wood")}</div><h3>${item}</h3><p>${esc(explain)}</p><small>已放进仓库 · 今天不能再抽同类卡</small><button class="primary" data-do="close">收下</button></div>`);
   }
   function warehouse() {
-    const c = GameCity.init(s);
-    open("策略与因子库", GameCity.factors.map((f) => `<div class="material-row"><div class="material-icon"><b>${f.difficulty}</b></div><div><b>${f.name} × ${c.materials[f.id]}</b><small>${f.description}</small><a class="concept-help" href="https://www.pandaaiquant.com/learninghub/newcourse" target="_blank" rel="noopener noreferrer" title="去课程中心学习${f.concept}">? ${f.concept}</a></div></div>`).join("") + '<p class="muted">策略是“决定怎么买卖”的方法；因子是策略用来看数据的指标。R 是基础，SR 是进阶，SSR 需要综合多种信息。问号会打开 PandaAI 课程中心。</p>');
+    const c = GameCity.init(s),
+      guides = {
+        trend: { plain: "顺着已经形成的上涨或下跌方向做，但要防止刚追进去就反转。", rule: "先定什么情况买，再定跌到哪里退出；突破失败就停。", signals: "近期涨跌、均线、价格突破" },
+        value: { plain: "找价格相对便宜、基本情况还可以的标的，等价格回到更合理的位置。", rule: "便宜不等于值得买；要同时看盈利、负债和为什么变便宜。", signals: "估值、盈利质量、价格反转" },
+        defense: { plain: "先控制最坏会亏多少，再考虑能赚多少；看不清时可以少投或不投。", rule: "限制单次投入和最大亏损，避免把钱集中在一个机会里。", signals: "波动、质量、仓位和止损" },
+        research: { plain: "先查证消息和数据，再组合多个信号做决定，重点是结论能不能重复验证。", rule: "分开训练和验证，算上费用，不能偷看未来数据。", signals: "量价、多个因子、样本外验证" },
+      },
+      cards = GameCity.blueprints.map((b) => {
+        const g = guides[b.id],
+          factors = GameCity.factors.filter((f) => f.industry === b.id),
+          district = c.districts.find((d) => d.id === b.id),
+          installed = district?.factors || [];
+        return `<section class="strategy-family family-${b.id}"><header><span>${b.icon}</span><div><h3>${b.strategy}</h3><small>${g.plain}</small></div></header><div class="strategy-rule"><b>怎么做</b><p>${g.rule}</p><small>常看：${g.signals}</small></div><div class="factor-shelf">${factors.map((f) => `<article class="factor-card ${installed.includes(f.id) ? "installed" : ""}"><div><b>${f.name}</b><em>${f.difficulty}</em></div><p>${f.description}</p><small>${installed.includes(f.id) ? "✓ 已装进 " + b.name : "库存 " + c.materials[f.id] + " 张 · 可装进 " + b.name}</small><a href="https://www.pandaaiquant.com/docs/factor-library" target="_blank" rel="noopener noreferrer">去 Panda 因子库核对</a></article>`).join("")}</div><div class="strategy-status"><b>我的策略楼</b><span>${district ? `${district.floors} 层 · 已投入 ${district.budget} 币 · ${district.strategies.join("、")}` : "还没建设；先在市场事件中做一次同类决策，再抽到区域蓝图。"}</span></div><nav class="panda-actions"><a href="https://www.pandaaiquant.com/docs/strategy" target="_blank" rel="noopener noreferrer">看 Panda 策略规则</a><a href="https://www.pandaaiquant.com/docs/quantfactor-center" target="_blank" rel="noopener noreferrer">挑选更多因子</a><a href="https://www.pandaaiquant.com/docs/qube" target="_blank" rel="noopener noreferrer">让 AI 研究候选策略</a></nav></section>`;
+      }).join("");
+    open("四类策略库", `<div class="strategy-library-intro"><b>先选一类思路，再给它装策略卡</b><p>策略是“什么时候买、什么时候卖”的整套规则；因子是规则用来判断的数据信号。你的每栋楼对应一类策略，每装一张同类策略卡就多一层。</p></div>${cards}<p class="muted">当前是规则映射和官方入口直连：会把你带到 PandaAI 对应的策略开发、因子中心或 Qube 研究说明。尚未登录或取得 PandaAI 接口授权，因此不会假装已经把你的游戏策略自动写入 Panda 账户。</p>`);
   }
 
   function district(id) {
@@ -1178,11 +1207,25 @@
     s.knowledgeUnlocks ||= {};
     if (s.tutorial === "build") s.knowledgeUnlocks[id] = true;
     if (!d && !s.knowledgeUnlocks[id]) return districtChallenge(id);
-    open(b.name, `<div class="eyebrow">${b.strategy} / ${s.tutorial === "build" ? "新手引导免答" : "已通过知识题"}</div><p>${b.description}</p><div class="notice"><b>${d ? "当前 " + d.floors + " 层" : "建楼会真实扣除游戏币"}</b><br>每安装一张同类策略卡，就增加一层楼。因子卡就是策略组件，不再只是装饰材料。</div>${d ? `<p>已运行策略：${d.strategies.join("、")}。累计建楼投入 ${d.budget} 游戏币。</p>` : '<p class="muted">选择1–2张策略卡作为首批楼层。没有对应区域卡不能建设。</p>'}${cards.map((f) => `<label><input type="checkbox" name="factor" value="${f.id}" ${d?.factors.includes(f.id) ? "checked disabled" : ""} ${!d?.factors.includes(f.id) && !c.materials[f.id] ? "disabled" : ""}> ${f.name}（卡库 ${c.materials[f.id]}）<small> · ${f.description}</small></label>`).join("")}<label for="cityBudget">${d ? "本次加盖投入" : "本次建楼投入"}（100–5000 游戏币，会从现金扣除）</label><input id="cityBudget" type="number" min="100" max="5000" step="100" value="1000"><div class="notice">楼内策略当前使用合成行情教学。真实行情必须接 Panda Data 或其他明确数据源；接入前不会冒充实盘收益。</div><button class="primary" data-do="${d ? "cityBudget" : "buildCity"}" data-id="${id}">${d ? "安装新策略并加盖一层" : "花钱建设策略大楼"}</button>`);
+    const suggested = Math.max(100, Math.min(s.balance, Math.round((s.balance * 0.1) / 100) * 100));
+    open(b.name, `<div class="eyebrow">${b.strategy} / ${s.tutorial === "build" ? "新手引导免答" : "已通过知识题"}</div><p>${b.description}</p><div class="notice"><b>${d ? "当前 " + d.floors + " 层" : "建楼会真实扣除游戏币"}</b><br>追加资金会提高每日收益；每安装一张同类策略卡，才会增加一层楼。投入越多收益越高，但会逐渐边际递减。</div>${d ? `<p>已运行策略：${d.strategies.join("、")}。累计建楼投入 ${d.budget} 游戏币。</p>` : '<p class="muted">选择1–2张策略卡作为首批楼层。没有对应区域卡不能建设。</p>'}${cards.map((f) => `<label><input type="checkbox" name="factor" value="${f.id}" ${d?.factors.includes(f.id) ? "checked disabled" : ""} ${!d?.factors.includes(f.id) && !c.materials[f.id] ? "disabled" : ""}> ${f.name}（卡库 ${c.materials[f.id]}）<small> · ${f.description}</small></label>`).join("")}<label for="cityBudget">${d ? "本次追加投入" : "本次建楼投入"}（最低 100，上限为当前现金 ${s.balance}）</label><input id="cityBudget" type="number" min="100" max="${s.balance}" step="1" value="${suggested}"><div class="numbers city-return-preview"><div><small>本次投入</small><strong id="cityPreviewSpend">${suggested}</strong></div><div><small>建成后楼层</small><strong id="cityPreviewFloors">-</strong></div><div><small>预计每日收益</small><strong id="cityPreviewIncome">-</strong></div></div><p class="muted">预计值按游戏规则计算；投入越多收益越高，但不会等比无限增长。</p><div class="notice">楼内策略当前使用合成行情教学。真实行情必须接 Panda Data 或其他明确数据源。</div><button class="primary" data-do="${d ? "cityBudget" : "buildCity"}" data-id="${id}" ${s.balance < 100 ? "disabled" : ""}>${d ? "追加投入 / 安装新策略" : "确认投资建楼"}</button>`);
+    const updatePreview = () => {
+      const amount = Number($("#cityBudget")?.value) || 0,
+        additions = [...modal.querySelectorAll('input[name="factor"]:checked:not(:disabled)')].length,
+        floors = d ? d.floors + additions : Math.max(1, additions),
+        projected = { id, budget: (d?.budget || 0) + amount, floors, factors: Array(floors).fill("strategy"), development: d?.development || 0 },
+        income = amount >= 100 && amount <= s.balance ? GameCity.returns(projected, {}).gross : 0;
+      $("#cityPreviewSpend").textContent = amount || "-";
+      $("#cityPreviewFloors").textContent = floors + " 层";
+      $("#cityPreviewIncome").textContent = income ? "约 +" + income : "金额无效";
+    };
+    $("#cityBudget").addEventListener("input", updatePreview);
+    modal.querySelectorAll('input[name="factor"]').forEach((input) => input.addEventListener("change", updatePreview));
+    updatePreview();
   }
   function cityLedger() {
     const c = GameCity.init(s);
-    open("每日建设收益账本", `${c.ledger.map((l) => `<div class="ledgeritem"><b>游戏第 ${l.gameDay || "?"} 天 · 固定经营收益</b><br>${l.balanceBefore} → ${l.balanceAfter} 币${l.details.map((d) => `<p>${GameCity.blueprints.find((b) => b.id === d.id).name}：固定收入 +${d.delta}<br><small>材料 ${d.factors.join(", ")} · 建设度 ${d.development}%</small></p>`).join("")}<small>${l.rule} · ${l.idempotencyKey}</small></div>`).join("") || "<p>还没有领取建设收益。先建设一个区域吧。</p>"}<p class="muted">固定收益只属于游戏经营规则，不代表真实投资回报。</p>`);
+    open("每日建设收益账本", `${c.ledger.map((l) => `<div class="ledgeritem"><b>游戏第 ${l.gameDay || "?"} 天 · 经营收益</b><br>${l.balanceBefore} → ${l.balanceAfter} 币${l.details.map((d) => `<p>${GameCity.blueprints.find((b) => b.id === d.id).name}：投入 ${d.budget} · ${d.floors || d.factors.length} 层 · 收入 +${d.delta}<br><small>策略 ${d.factors.join(", ")} · 建设度 ${d.development}%</small></p>`).join("")}<small>${l.rule} · ${l.idempotencyKey}</small></div>`).join("") || "<p>还没有领取建设收益。先建设一个区域吧。</p>"}<p class="muted">这是游戏内按投入、楼层和建设度计算的收益，不代表真实投资回报。</p>`);
   }
   async function aiOptions() {
     const status = await PandaAI.status();

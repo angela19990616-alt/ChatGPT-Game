@@ -185,7 +185,7 @@
     const c = init(s);
     if (!c.blueprints.includes(id) || c.districts.some((d) => d.id === id)) throw Error("区域卡不可用或大楼已建成");
     if (!s.evidence.some((e) => e.dimension === "attribute" && e.value === id && e.source !== "city_build")) throw Error("先完成一次同类策略决策，才能在这里建楼");
-    if (!Number.isInteger(budget) || budget < 100 || budget > 5000) throw Error("建楼投入须为100–5000整数游戏币");
+    if (!Number.isInteger(budget) || budget < 100) throw Error("建楼投入至少为100整数游戏币");
     if (budget > s.balance) throw Error("现金不足，不能建楼");
     if (factorIds.length < 1 || factorIds.length > 2 || new Set(factorIds).size !== factorIds.length) throw Error("选择1–2张不同策略卡");
     for (const f of factorIds) {
@@ -221,9 +221,8 @@
     const c = init(s),
       d = c.districts.find((d) => d.id === id);
     if (!d) throw Error("大楼不存在");
-    if (!Number.isInteger(budget) || budget < 100 || budget > 5000) throw Error("加盖投入须为100–5000整数");
+    if (!Number.isInteger(budget) || budget < 100) throw Error("加盖投入至少为100整数游戏币");
     const additions = ids.filter((fid) => !d.factors.includes(fid));
-    if (!additions.length) throw Error("请选择一张尚未安装的新策略卡");
     if (budget > s.balance) throw Error("现金不足，不能加盖");
     for (const fid of additions) {
       const card = factors.find((f) => f.id === fid);
@@ -241,8 +240,10 @@
     const blueprint = blueprints.find((b) => b.id === id);
     c.feedback = {
       kind: "refit",
-      title: blueprint.name + "加盖完成",
-      text: "花费 " + budget + " 游戏币，新增 " + additions.length + " 层。当前 " + d.floors + " 层：" + d.strategies.join("、"),
+      title: blueprint.name + (additions.length ? "加盖完成" : "追加投入完成"),
+      text: additions.length
+        ? "花费 " + budget + " 游戏币，新增 " + additions.length + " 层。当前 " + d.floors + " 层：" + d.strategies.join("、")
+        : "追加投入 " + budget + " 游戏币；楼层不变，预计每日经营收益提高。",
     };
     Game.evidence(s, "construction", id + "|add:" + additions.join("+") + "|cost:" + budget, "observed_action", "during", false);
   }
@@ -256,9 +257,25 @@
   }
   function returns(d, m) {
     const bp = blueprints.find((b) => b.id === d.id),
-      level = Math.max(1, Math.floor((d.development || 0) / 25) + 1),
-      gross = bp.dailyIncome + (level - 1) * 20;
-    return { bp: 0, turnover: 0, fee: 0, gross, credit: gross, fixed: true };
+      invested = Math.max(100, Number(d.budget) || 100),
+      floors = Math.max(1, Number(d.floors) || d.factors?.length || 1),
+      investmentFactor = Math.sqrt(invested / 1000),
+      floorFactor = 1 + (floors - 1) * 0.1,
+      developmentFactor = 1 + Math.min(0.16, Math.max(0, Number(d.development) || 0) * 0.0016),
+      gross = Math.max(1, Math.floor(bp.dailyIncome * investmentFactor * floorFactor * developmentFactor));
+    return {
+      bp: 0,
+      turnover: 0,
+      fee: 0,
+      gross,
+      credit: gross,
+      fixed: true,
+      invested,
+      floors,
+      investmentFactor,
+      floorFactor,
+      developmentFactor,
+    };
   }
   function draft(s) {
     const c = init(s),
@@ -282,7 +299,7 @@
           development: d.development,
         })),
       ),
-      rule: "city-2.0-fixed-income",
+      rule: "city-3.0-investment-scaled-income",
     };
   }
   function settle(s, a) {
@@ -329,9 +346,9 @@
     c.feedback = {
       kind: "market",
       title: "第 " + a.season + " 赛季第 " + a.gameDay + " 天建设收益",
-      text: "城区建设固定经营收益 +" + delta + " 游戏币。" + details.map((d) => blueprints.find((b) => b.id === d.id).name + " +" + d.delta).join("；"),
+      text: "城区经营收益 +" + delta + " 游戏币。投入和楼层越多，收益基数越高，但投入采用边际递减。" + details.map((d) => blueprints.find((b) => b.id === d.id).name + " +" + d.delta).join("；"),
     };
-    Game.evidence(s, "city", "第" + a.season + "赛季第" + a.gameDay + "天固定建设收益：" + details.map((d) => d.id + "+" + d.delta).join("；"), "observed_action", "during", false, "city-s" + a.season + "-d" + a.gameDay);
+    Game.evidence(s, "city", "第" + a.season + "赛季第" + a.gameDay + "天建设收益：" + details.map((d) => d.id + "|投入" + d.budget + "|楼层" + d.floors + "|+" + d.delta).join("；"), "observed_action", "during", false, "city-s" + a.season + "-d" + a.gameDay);
     return entry;
   }
   const api = {
