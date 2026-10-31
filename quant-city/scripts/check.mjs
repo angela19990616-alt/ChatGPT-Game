@@ -1,0 +1,1 @@
+import {readdir}from'node:fs/promises';import{spawnSync}from'node:child_process';for(const dir of ['dist','server','scripts'])for(const f of await readdir(dir))if(/\.(js|mjs)$/.test(f)){const r=spawnSync(process.execPath,['--check',dir+'/'+f],{stdio:'inherit'});if(r.status)process.exit(r.status);}console.log('All JS syntax checks passed');
