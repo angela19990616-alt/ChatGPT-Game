@@ -45,7 +45,7 @@ npm start
 
 ## Cloudflare 线上 AI 版
 
-`wrangler.jsonc` 会把 `dist` 静态 H5 与 `server/worker.mjs` 部署为同站 Worker。只有 `/api/*` 进入 Worker；AI Key 与会话签名只存为 Cloudflare Secret，不会进入前端或 Git。公开 API 另有 Cloudflare 限流绑定（每个来源、每条 API 路径每分钟 12 次）及应用内会话限流。
+正式试玩入口仍使用 GitHub Pages。页面在 `angela19990616-alt.github.io` 打开时，`ai-client.js` 会把 AI 请求发送到 `https://quant-game.angela-tech.com`；Cloudflare Worker 仅允许这个 GitHub Pages 来源跨域访问。AI Key 与会话签名只存为 Cloudflare Secret，不会进入前端或 Git。公开 API 另有 Cloudflare 限流绑定（每个来源、每条 API 路径每分钟 12 次）及应用内会话限流。
 
 首次部署前，在已经登录 Cloudflare 的终端执行：
 
@@ -55,7 +55,7 @@ npx wrangler secret put SESSION_SECRET
 npx wrangler deploy
 ```
 
-`SESSION_SECRET` 应使用独立随机值，不要复用 API Key。若启用 ElevenLabs，再分别配置服务端 Secret 和 Voice ID。线上玩家仍需在游戏设置中主动同意并开启“剧情 AI”，否则保持本地规则模式。静态 GitHub Pages 版不具备服务端 AI；应把对外试玩链接指向 Worker 部署地址。
+`SESSION_SECRET` 应使用独立随机值，不要复用 API Key。若启用 ElevenLabs，再分别配置服务端 Secret 和 Voice ID。线上玩家仍需在游戏设置中主动同意并开启“剧情 AI”，否则保持本地规则模式。Cloudflare 地址是后端与备用入口；比赛对外试玩仍使用 GitHub Pages 链接。
 
 ## 验证与交接
 

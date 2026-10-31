@@ -10,6 +10,7 @@
   "vars": {
     "ENABLE_PAID_AI": "true",
     "PUBLIC_AI": "true",
+    "PUBLIC_ORIGIN": "https://angela19990616-alt.github.io",
     "DEEPSEEK_MODEL": "deepseek-flash"
   },
   "assets": {

@@ -16,3 +16,11 @@ test('worker serves static assets without invoking the API limiter',async()=>{
   assert.equal(await response.text(),'asset');
   assert.equal(calls,0);
 });
+
+test('worker permits CORS only for the configured GitHub Pages origin',async()=>{
+  const origin='https://angela19990616-alt.github.io',env={PUBLIC_ORIGIN:origin,ASSETS:{fetch:async()=>new Response('asset')}};
+  const allowed=await worker.fetch(new Request('https://game.test/api/dialogue',{method:'OPTIONS',headers:{origin}}),env);
+  assert.equal(allowed.status,204);assert.equal(allowed.headers.get('access-control-allow-origin'),origin);
+  const denied=await worker.fetch(new Request('https://game.test/api/dialogue',{method:'OPTIONS',headers:{origin:'https://evil.example'}}),env);
+  assert.equal(denied.status,403);assert.equal(denied.headers.get('access-control-allow-origin'),null);
+});
