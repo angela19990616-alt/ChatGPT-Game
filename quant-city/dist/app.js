@@ -125,7 +125,7 @@
   }
   function intro() {
     s = null;
-    app.innerHTML = `<main class="game opening">${world()}<div class="opening-shade"></div><div class="chapter-stamp">第一章<small>你的量化董事会</small></div>${character()}${speech(`<b>先用 30 秒看懂怎么玩：</b><br>① 连续 3 天，每天处理 3 封市场来信，选择投入、不投或先查资料。<br>② 抽区域蓝图和策略卡：蓝图用来解锁地块，每张策略卡可给大楼增加一层。<br>③ AI 会根据你的金额和理由解释当轮风格；第 4 天生成策略画像和 PandaAI 学习建议。<br><small>金币由程序结算，不是真实投资或收益保证。</small>`, '<button class="primary" data-do="askName">我懂了，开始玩 ' + CityArt.icon("arrow") + "</button>")}<button class="skip-dialogue" data-do="askName">跳过玩法说明</button>${foot()}</main>`;
+    app.innerHTML = `<main class="game opening welcome-screen">${world()}<div class="opening-shade"></div><div class="chapter-stamp">量化董事会<small>你的每次选择，都有故事</small></div>${character()}<section class="welcome-card"><h1>董事长，欢迎上任。</h1><p>从第一封市场来信开始，找到属于你的投资方式。</p><button class="primary" data-do="askName">开始我的故事 ${CityArt.icon("arrow")}</button></section>${foot()}</main>`;
   }
   function askName() {
     app.innerHTML = `<main class="game opening">${world()}<div class="opening-shade"></div>${character()}<section class="vn-dialogue name-dialogue"><div class="nameplate">量化研究员<small>新手引导</small></div><p>请告诉我您的名字。接下来，大家统一称呼您为“董事长”。</p><form id="start"><div class="nameentry"><input id="nickname" maxlength="12" placeholder="输入你的名字" autocomplete="off" aria-label="董事长姓名"></div><label class="savechoice"><input id="persist" type="checkbox" checked> 保存到这台设备</label><small class="privacyline">名字、对话和选择只用于本局，可查看、纠正或清除。</small><button class="primary" type="submit">以董事长身份进入 →</button></form></section>${foot()}</main>`;
@@ -139,6 +139,7 @@
       GameCity.init(s);
       save();
       render();
+      open("上任第一课", `<p>连续玩 3 天，每天处理 3 封市场来信。你可以决定投多少、不投，或者先查资料。</p><p>区域蓝图用来解锁地块，策略卡可以给对应大楼增加一层。</p><p>AI 会根据你的金额和理由解释当轮风格；第 4 天生成策略画像和 PandaAI 学习建议。</p><small>金币由程序结算，不是真实投资或收益保证。</small><div class="actions"><button class="primary" data-do="close">明白了，处理第一封来信</button><button data-do="close">跳过说明</button></div>`);
     };
     $("#nickname").focus();
   }

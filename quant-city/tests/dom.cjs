@@ -39,12 +39,16 @@ const q = (s) => w.document.querySelector(s),
   };
 (async () => {
   assert.ok(q("[data-do=askName]"));
+  assert.equal(q(".welcome-screen .nameplate"), null);
+  assert.doesNotMatch(q(".welcome-screen").textContent, /先用 30 秒|每天处理 3 封/);
   assert.equal(q(".game-dock"), null);
   click("[data-do=askName]");
   submit("#start");
   assert.ok(q("#start"));
   input("#nickname", "<img>总");
   submit("#start");
+  assert.match(q("#modal").textContent, /上任第一课|每天处理 3 封/);
+  click("[data-do=close]");
   assert.ok(q(".vn-dialogue").textContent.includes("第一封市场来信"));
   assert.ok(q("[data-do=skipTutorial]"), "tutorial should always offer a visible skip action");
   assert.ok(!q(".vn-dialogue").textContent.includes("<img>总"));
