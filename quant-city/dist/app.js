@@ -4,7 +4,8 @@
     $ = (s) => document.querySelector(s),
     app = $("#app"),
     modal = $("#modal"),
-    KEY = "panda-neon-v1";
+    KEY = "panda-neon-v1",
+    AI_PREF = "panda-ai-mode-v1";
   let s = null,
     saved = null,
     drawTimer = 0,
@@ -95,7 +96,7 @@
     state.schema = 2;
     return state;
   }
-  const foot = () => `<span class="mockmark">本地模拟 · 非真实行情</span>`;
+  const foot = () => `<span class="mockmark">${PandaAI.enabled ? "AI 剧情 · 本地结算" : "本地模拟"} · 非真实行情</span>`;
   function hud() {
     const day = s ? Math.min(3, Math.floor(s.round / G.CONFIG.roundsPerDay) + 1) : 1,
       turn = s ? (s.round % G.CONFIG.roundsPerDay) + 1 : 1;
@@ -672,11 +673,13 @@
           break;
         case "aiEnable":
           PandaAI.enabled = true;
+          localStorage.setItem(AI_PREF, "ai");
           close();
           toast("已开启剧情AI；本局匿名游戏信息会发送到服务端。");
           break;
         case "aiDisable":
           PandaAI.enabled = false;
+          localStorage.setItem(AI_PREF, "local");
           PandaAI.cancel();
           close();
           toast("已切回本地剧情。");
@@ -1283,6 +1286,14 @@
     }
   });
   window.addEventListener("offline", () => toast("离线可继续：规则、课堂与存档均在本机运行。"));
+  const publicAiHost = location.hostname.endsWith("github.io") || location.hostname === "quant-game.angela-tech.com";
+  if (publicAiHost && localStorage.getItem(AI_PREF) !== "local") {
+    PandaAI.enabled = true;
+    void PandaAI.status().then((status) => {
+      if (status.mode !== "available") PandaAI.enabled = false;
+      if (s) render();
+    });
+  }
   if (saved) {
     s = migrateStrategies(JSON.parse(JSON.stringify(saved)));
     s.tutorial ||= "done";
