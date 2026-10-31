@@ -14,6 +14,11 @@ const html=fs.readFileSync(__dirname+'/../dist/index.html','utf8');
   for(const f of ['engine.js','city.js','analyst.js','city-art.js','ai-client.js','app.js'])w.eval(fs.readFileSync(__dirname+'/../dist/'+f,'utf8'));
   await new Promise(resolve=>w.setTimeout(resolve,0));
 
+  assert.equal(w.document.querySelectorAll('[data-do=choose]').length,3);
+  assert.match(w.document.querySelector('.gamechoices').textContent,/投入 · 金额由你决定/);
+  assert.match(w.document.querySelector('.gamechoices').textContent,/不投 · 保留现金/);
+  assert.match(w.document.querySelector('.gamechoices').textContent,/先查资料 · 研究/);
+
   const term=w.document.querySelector('[data-do=termHelp]');
   assert.ok(term,'event concept should be visibly explainable');
   term.dispatchEvent(new w.MouseEvent('click',{bubbles:true}));
@@ -21,7 +26,7 @@ const html=fs.readFileSync(__dirname+'/../dist/index.html','utf8');
   assert.match(w.document.querySelector('#modal a').href,/pandaaiquant\.com\/learninghub\/newcourse/);
   w.document.querySelector('#modal').close();
 
-  w.document.querySelector('[data-do=choose][data-id=full]').dispatchEvent(new w.MouseEvent('click',{bubbles:true}));
+  w.document.querySelector('[data-do=choose][data-id=custom]').dispatchEvent(new w.MouseEvent('click',{bubbles:true}));
   const amount=w.document.querySelector('#investAmount');amount.value='1200';amount.dispatchEvent(new w.Event('input',{bubbles:true}));
   const current=JSON.parse(w.localStorage.getItem('panda-neon-v1'));
   assert.equal(current.draft.amount,1200);

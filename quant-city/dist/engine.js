@@ -1,36 +1,503 @@
 /* Pure, deterministic rules. No model may mutate money or profile. */
-(function(root){
-'use strict';
-const CONFIG={initial:10000,days:3,roundsPerDay:3,rounds:9,rule:'1.4',xpPerEvent:20};
-const attributes={full:'trend',small:'value',skip:'defense',report:'research'};
-const people=[{id:'ai',name:'量化研究员',role:'研究策略 · 先调查再决定',code:'研究',color:'#9eabff',file:'01_ai_assistant.png',dimension:'信息研究偏好',hint:'完成“先查数据”类决策，解锁研究院和因子研究。'}, {id:'risk',name:'风险管理师',role:'防守策略 · 先保住现金',code:'防守',color:'#76e3cd',file:'02_risk_officer.png',dimension:'稳健防守偏好',hint:'完成“暂不买入”类决策，解锁防守园和仓位管理。'}, {id:'tech',name:'趋势交易员',role:'趋势策略 · 上涨时顺势跟进',code:'趋势',color:'#ffb57b',file:'03_trader.png',dimension:'趋势跟随偏好',hint:'完成“全额买入”类决策，解锁趋势港和动量工具。'}, {id:'finance',name:'价值投资员',role:'价值策略 · 跌下来分批试买',code:'价值',color:'#dfc1ff',file:'04_research_mentor.png',dimension:'价值低吸偏好',hint:'完成“小额试仓”类决策，解锁价值街和估值因子。'}];
-const families=[
-{title:'科技板块跌了 8%，新产品刚发布',type:'波动',concept:'回撤',strategy:'value',strategyName:'价值低吸',lead:'finance',story:'科技板块今天跌了 8%，但龙头公司刚发布一款新产品。有人觉得价格便宜了，也有人担心行业还会继续下跌。',fact:'机会和风险同时存在：买得多，反弹时赚得多；继续下跌时也亏得多。',choices:{full:'看好反弹，买入较多',small:'先买少量，边走边看',skip:'等走势稳定再考虑',report:'先查公司和行业数据'},p:46,up:122,down:86},
-{title:'策略过去三年不错，最近三个月一般',type:'验证',concept:'样本外验证',strategy:'research',strategyName:'策略验证',lead:'ai',story:'这个策略过去三年总体赚钱，但最近三个月表现普通。可能只是暂时不适应，也可能已经失效。',fact:'历史表现有参考价值，但不能保证以后一样。重点是你愿意承担多少不确定性。',choices:{full:'相信长期表现，投入较多',small:'先用小资金试运行',skip:'暂时不用这个策略',report:'先看不同年份的表现'},p:52,up:116,down:90},
-{title:'短线机会多，但每次都要付手续费',type:'成本',concept:'交易成本',strategy:'defense',strategyName:'成本控制',lead:'risk',story:'短线策略一天可能出现很多机会，每次预期赚得不多，同时每次买卖都要付手续费。',fact:'交易越频繁，手续费越多；但完全不交易也可能错过机会。',choices:{full:'机会都做，争取累计收益',small:'只做最有把握的一部分',skip:'费用太高，今天不做',report:'先算扣完费用还能赚多少'},p:58,up:108,down:95},
-{title:'公司传出新订单，成交量也变大了',type:'数据',concept:'未来数据泄漏',strategy:'research',strategyName:'信息研究',lead:'ai',story:'市场传出公司拿到大订单的消息，股票成交量也明显变大，但公司还没有正式公告。',fact:'消息可能提前反映真实变化，也可能只是传闻。越早行动，潜在收益和误判风险都越大。',choices:{full:'愿意冒险，提前买入',small:'小额参与，控制损失',skip:'等正式公告后再决定',report:'先查消息来源和历史数据'},p:48,up:124,down:84},
-{title:'两个机会同时出现，现金只能重点买一个',type:'配置',concept:'资金占用',strategy:'defense',strategyName:'资金管理',lead:'risk',story:'一个板块涨势更强，另一个板块价格更便宜。两个机会都有理由，但你的现金有限。',fact:'集中买一个，判断正确时收益更高；分散或留现金，结果通常更稳。',choices:{full:'集中资金买更看好的机会',small:'只投入一部分，保留余地',skip:'先保留现金等待新机会',report:'比较两个机会的数据再选'},p:54,up:114,down:91},
-{title:'板块已经上涨一段，还可能继续涨',type:'复盘',concept:'概率与结果',strategy:'trend',strategyName:'趋势跟随',lead:'tech',story:'板块已经连续上涨，趋势仍然向上，但价格也比之前贵了。继续上涨和突然回落都有可能。',fact:'跟随趋势可能继续获利，也要承担高位回落；没有唯一正确答案。',choices:{full:'继续看涨，投入较多',small:'跟随趋势，但控制仓位',skip:'价格偏高，先不追',report:'先看上涨是否有数据支持'},p:53,up:115,down:89}
-];
-function rand(seed){let n=seed>>>0;n^=n<<13;n^=n>>>17;n^=n<<5;return (n>>>0)/4294967296;}
-function fresh(name,save=false,goal='探索基础',initial=CONFIG.initial,seed=Date.now()>>>0){return {schema:2,id:'run-'+seed,seed,version:0,name:(String(name).trim().slice(0,12)||'玩家').replace(/总+$/,'')||'玩家',save,goal,initial,balance:initial,round:0,season:1,career:null,careerHistory:[],phase:'ready',event:null,draft:null,ledger:[],xp:0,evidence:[],corrections:{},profileVersion:1,lessons:[],quiz:[],knowledgeAttempts:[],knowledgeUnlocks:{},chats:[],npc:0,prompted:[],resourceFeedback:[],cg:'idle'};}
-function eventFor(s){const season=s.season||1,index=s.round===0?0:((s.seed%5+s.round+season-2)%5)+1;const f=families[index],roll=rand(s.seed+s.round+season*997+99),rarity=roll<.5?'R':roll<.85?'SR':'SSR';const factor={R:2,SR:5,SSR:8}[rarity],amount=1000*factor;const e={...f,id:s.id+'-s'+season+'-e'+s.round,version:1,rule:CONFIG.rule,seed:(s.seed+s.round*7919+season*997+17)>>>0,p:f.p,amount,fee:Math.ceil(amount/100),report:50,rarity,source:'Mock 参数组合'};validate(e);return e;}
-function validate(e){if(!Number.isInteger(e.p)||e.p<0||e.p>100||!Number.isInteger(e.amount)||e.amount<1||e.amount>10000||!Number.isInteger(e.fee)||e.fee<0||e.up<0||e.up>200||e.down<0||e.down>200||!['research','defense','trend','value'].includes(e.strategy)||!people.some(p=>p.id===e.lead)||!e.strategyName)throw Error('事件规则校验失败');return true;}
-function draw(s){if(s.phase!=='ready')return s.event;s.event=eventFor(s);s.phase='event';s.version++;s.draft=null;return s.event;}
-function spec(e,action,amount){if(action==='skip')return {action,amount:0,fee:0,report:0};if(action==='report')return {action,amount:0,fee:0,report:50};if(!['small','full','custom'].includes(action))throw Error('不支持的行动');const a=amount===undefined?(action==='small'?Math.floor(e.amount/2):e.amount):amount;if(!Number.isInteger(a)||a<1||a>e.amount)throw Error('请输入 1–'+e.amount+' 的整数投入');return {action,amount:a,fee:Math.ceil(a/100),report:0};}
-function gameDay(s){return Math.floor(s.round/CONFIG.roundsPerDay)+1;}
-function spendingLocked(s){const day=gameDay(s);return Boolean(s.spendingLockDay===day||(s.spendingWarning&&day===1));}
-function proposal(s,action,amount,reason=''){if(s.phase!=='event')throw Error('当前无法提交行动');if(spendingLocked(s)&&['full','small','custom'].includes(action))throw Error('今天投入过猛，今天剩余投资选项已进入资金纪律限制');const a=spec(s.event,action,amount);if(a.amount+a.fee+a.report>s.balance)throw Error('可用现金不足，请选择较小金额或不投资');return {...a,id:s.event.id,eventVersion:s.event.version,reason:String(reason).slice(0,300),key:s.event.id+'-settle'};}
-function replay(e,a){validate(e);const win=rand(e.seed)<e.p/100;const credit=a.amount?Math.floor(a.amount*(win?e.up:e.down)/100):0;return {debit:a.amount+a.fee+a.report,credit,win,delta:credit-a.amount-a.fee-a.report};}
-function evidence(s,dimension,value,source='observed_action',phase='before_learning',prompted=false,eventKey){const key=eventKey||s.event?.id||'intro';if(s.evidence.some(x=>x.eventId===key&&x.dimension===dimension&&x.value===value))return false;s.evidence.push({id:'ev-'+(s.evidence.length+1),eventId:key,family:s.event?.type||'入场',dimension,value,source,phase,prompted,rule:CONFIG.rule});return true;}
-function observe(s,kind,text,prompted=false){const names={risk:'核对风险与退出边界',tech:'核对指标与验证依据',finance:'核对资金占用和备用金',ai:'解释决策理由'};if(!names[kind])return;const fresh=evidence(s,kind,names[kind], 'observed_action',s.lessons.includes(s.event?.concept)?'after_learning':'before_learning',prompted);if(fresh){s.xp+=5;}}
-function settle(s,a){const previous=s.ledger.find(x=>x.idempotencyKey===a.key);if(previous)return previous;if(s.phase!=='event'||a.id!==s.event.id||a.eventVersion!==s.event.version)throw Error('行动已过期，请重新确认');const verified=proposal(s,a.action,a.amount||undefined,a.reason);if(verified.amount!==a.amount||verified.fee!==a.fee||verified.report!==a.report)throw Error('草案参数无效');const r=replay(s.event,a),before=s.balance,attribute=attributes[a.action]||(a.amount<=Math.floor(s.event.amount/2)?'value':'trend'),debit=a.amount+a.fee+a.report,day=gameDay(s),ratio=a.amount/Math.max(1,before),risk=a.report?'中低':!a.amount?'低':ratio>=.5?'高':ratio>=.2?'中':'低',moneyStyle=a.report?'先买信息':!a.amount?'保留现金':ratio>=.5?'集中投入':ratio>=.2?'分批尝试':'小额试水',decisionStyle={full:'机会优先',small:'边做边看',skip:'风险优先',report:'证据优先'}[a.action]||'自定义';const entry={ledgerEntryId:'l-'+s.ledger.length,runId:s.id,eventId:a.id,actionId:a.action,attribute,idempotencyKey:a.key,balanceBefore:before,balanceAfter:before-debit,...r,amount:a.amount,fee:a.fee,report:a.report,dueDay:a.amount?day+1:day,status:a.amount?'pending':'settled',ruleVersion:CONFIG.rule,event:JSON.parse(JSON.stringify(s.event)),proposal:{...a}};s.ledger.push(entry);s.balance=entry.balanceAfter;if(day===1&&s.ledger.filter(x=>x.event&&Math.floor((Number(x.eventId.match(/e(\d+)$/)?.[1])||0)/CONFIG.roundsPerDay)+1===1).reduce((n,x)=>n+x.debit,0)>s.initial*.6)s.spendingLockDay=day;s.xp+=CONFIG.xpPerEvent;if(a.reason.trim().length>=4)observe(s,'ai',a.reason,false);evidence(s,'allocation',Math.round(a.amount/Math.max(1,Math.abs(before))*100)+'% 投入；可用现金 '+s.balance+' 币','observed_action','during',false);evidence(s,'risk_appetite',risk,'observed_action','during',false);evidence(s,'money_style',moneyStyle,'observed_action','during',false);evidence(s,'decision_style',decisionStyle,'observed_action','during',false);evidence(s,'attribute',attribute,'observed_action','during',false);evidence(s,'strategy',s.event.strategy+':'+(a.amount?'follow':a.report?'study':'pass'),'observed_action','during',false);s.phase='result';s.draft=null;s.version++;return entry;}
-function resolveDue(s,day=CONFIG.days+1){const resolved=[];for(const e of s.ledger)if(e.status==='pending'&&e.dueDay<=day){s.balance+=e.credit;e.status='settled';e.settledDay=day;e.balanceAfterReturn=s.balance;resolved.push(e);}s.lastSettlement=resolved.map(e=>({eventId:e.eventId,credit:e.credit,delta:e.delta}));s.bankrupt=s.balance<0;return resolved;}
-function next(s){if(s.phase!=='result')return;s.round++;s.event=null;s.draft=null;s.prompted=[];s.cg='idle';if(s.round>=CONFIG.rounds){resolveDue(s,CONFIG.days+1);s.phase=s.bankrupt?'bankrupt':'finalReport';}else s.phase=s.round%CONFIG.roundsPerDay===0?'daybreak':'ready';s.version++;}
-function startCareer(s,career){if(!['trend','value','defense','research','chairman'].includes(career))throw Error('职业不存在');s.career=career;s.careerHistory||=[];s.careerHistory.push({career,season:s.season||1,evidenceCount:s.evidence.length,balance:s.balance});s.season=(s.season||1)+1;s.round=0;s.phase='ready';s.event=null;s.draft=null;s.view='city';s.bankrupt=false;delete s.spendingLockDay;delete s.spendingWarning;s.version++;evidence(s,'career',career,'user_choice','after_assessment',false,'career-s'+s.season);return s;}
-function startDay(s){if(s.phase!=='daybreak')return;resolveDue(s,Math.floor(s.round/CONFIG.roundsPerDay)+1);s.phase=s.bankrupt?'bankrupt':'ready';s.view='city';s.version++;}
-function claims(s){return ['risk','tech','finance','ai'].map(id=>{const ev=s.evidence.filter(e=>e.dimension===id);return {id,label:people.find(p=>p.id===id).dimension,events:new Set(ev.map(e=>e.eventId)).size,evidence:ev,status:s.corrections[id]||(ev.length?'candidate':'unknown')};});}
-function correct(s,id,status){if(!['confirmed','rejected','roleplay','candidate'].includes(status)||!people.some(p=>p.id===id))throw Error('无效纠正');s.corrections[id]=status;s.profileVersion++;}
-function parse(s,text){const t=String(text).trim();if(!t)return {message:'请说说想法，或者直接选择下方方案。'};if(/全仓|借|杠杆|修改余额|充值/.test(t))return {message:'本轮只支持卡面内的无杠杆试验。请选择观察、报告或额度内投入。'};if(/不投|观望|观察|跳过/.test(t))return {action:'skip'};if(/买.*报告|购买.*数据|查报告/.test(t))return {action:'report'};if(/投入|投资|试试|试投/.test(t)){const n=t.match(/[-+]?\d+(?:\.\d+)?/);if(!n)return {message:'请给出具体整数金额，如“投入 500”。我会先出确认单，不会自动扣币。'};return {action:'custom',amount:Number(n[0])};}if(/风险|回撤|止损|退出/.test(t))return {kind:'risk'};if(/指标|数据|样本|回测|验证/.test(t))return {kind:'tech'};if(/费用|资金|仓位|现金|占用|备用/.test(t))return {kind:'finance'};return {message:'我理解你想讨论这个情境。Mock 版支持询问风险、指标、费用，或输入“投入 500”“买报告”“观察”。详细理由也可写在决策说明中。'};}
-const API={CONFIG,attributes,people,families,rand,fresh,eventFor,validate,draw,spec,gameDay,spendingLocked,proposal,replay,settle,resolveDue,next,startCareer,startDay,observe,evidence,claims,correct,parse};if(typeof module!=='undefined')module.exports=API;else root.Game=API;
-})(typeof window==='undefined'?globalThis:window);
+(function (root) {
+  "use strict";
+  const CONFIG = {
+    initial: 10000,
+    days: 3,
+    roundsPerDay: 3,
+    rounds: 9,
+    rule: "1.4",
+    xpPerEvent: 20,
+  };
+  const attributes = { skip: "defense", report: "research" };
+  const people = [
+    {
+      id: "ai",
+      name: "量化研究员",
+      role: "研究策略 · 先调查再决定",
+      code: "研究",
+      color: "#9eabff",
+      file: "01_ai_assistant.png",
+      dimension: "信息研究偏好",
+      hint: "完成“先查数据”类决策，解锁研究院和因子研究。",
+    },
+    {
+      id: "risk",
+      name: "风险管理师",
+      role: "防守策略 · 先保住现金",
+      code: "防守",
+      color: "#76e3cd",
+      file: "02_risk_officer.png",
+      dimension: "稳健防守偏好",
+      hint: "完成“暂不买入”类决策，解锁防守园和仓位管理。",
+    },
+    {
+      id: "tech",
+      name: "趋势交易员",
+      role: "趋势策略 · 上涨时顺势跟进",
+      code: "趋势",
+      color: "#ffb57b",
+      file: "03_trader.png",
+      dimension: "趋势跟随偏好",
+      hint: "完成“全额买入”类决策，解锁趋势港和动量工具。",
+    },
+    {
+      id: "finance",
+      name: "价值投资员",
+      role: "价值策略 · 跌下来分批试买",
+      code: "价值",
+      color: "#dfc1ff",
+      file: "04_research_mentor.png",
+      dimension: "价值低吸偏好",
+      hint: "完成“小额试仓”类决策，解锁价值街和估值因子。",
+    },
+  ];
+  const families = [
+    {
+      title: "科技板块跌了 8%，新产品刚发布",
+      type: "波动",
+      concept: "回撤",
+      strategy: "value",
+      strategyName: "价值低吸",
+      lead: "finance",
+      story: "科技板块今天跌了 8%，但龙头公司刚发布一款新产品。有人觉得价格便宜了，也有人担心行业还会继续下跌。",
+      fact: "机会和风险同时存在：买得多，反弹时赚得多；继续下跌时也亏得多。",
+      choices: {
+        full: "看好反弹，买入较多",
+        small: "先买少量，边走边看",
+        skip: "等走势稳定再考虑",
+        report: "先查公司和行业数据",
+      },
+      p: 46,
+      up: 122,
+      down: 86,
+    },
+    {
+      title: "策略过去三年不错，最近三个月一般",
+      type: "验证",
+      concept: "样本外验证",
+      strategy: "research",
+      strategyName: "策略验证",
+      lead: "ai",
+      story: "这个策略过去三年总体赚钱，但最近三个月表现普通。可能只是暂时不适应，也可能已经失效。",
+      fact: "历史表现有参考价值，但不能保证以后一样。重点是你愿意承担多少不确定性。",
+      choices: {
+        full: "相信长期表现，投入较多",
+        small: "先用小资金试运行",
+        skip: "暂时不用这个策略",
+        report: "先看不同年份的表现",
+      },
+      p: 52,
+      up: 116,
+      down: 90,
+    },
+    {
+      title: "短线机会多，但每次都要付手续费",
+      type: "成本",
+      concept: "交易成本",
+      strategy: "defense",
+      strategyName: "成本控制",
+      lead: "risk",
+      story: "短线策略一天可能出现很多机会，每次预期赚得不多，同时每次买卖都要付手续费。",
+      fact: "交易越频繁，手续费越多；但完全不交易也可能错过机会。",
+      choices: {
+        full: "机会都做，争取累计收益",
+        small: "只做最有把握的一部分",
+        skip: "费用太高，今天不做",
+        report: "先算扣完费用还能赚多少",
+      },
+      p: 58,
+      up: 108,
+      down: 95,
+    },
+    {
+      title: "公司传出新订单，成交量也变大了",
+      type: "数据",
+      concept: "未来数据泄漏",
+      strategy: "research",
+      strategyName: "信息研究",
+      lead: "ai",
+      story: "市场传出公司拿到大订单的消息，股票成交量也明显变大，但公司还没有正式公告。",
+      fact: "消息可能提前反映真实变化，也可能只是传闻。越早行动，潜在收益和误判风险都越大。",
+      choices: {
+        full: "愿意冒险，提前买入",
+        small: "小额参与，控制损失",
+        skip: "等正式公告后再决定",
+        report: "先查消息来源和历史数据",
+      },
+      p: 48,
+      up: 124,
+      down: 84,
+    },
+    {
+      title: "两个机会同时出现，现金只能重点买一个",
+      type: "配置",
+      concept: "资金占用",
+      strategy: "defense",
+      strategyName: "资金管理",
+      lead: "risk",
+      story: "一个板块涨势更强，另一个板块价格更便宜。两个机会都有理由，但你的现金有限。",
+      fact: "集中买一个，判断正确时收益更高；分散或留现金，结果通常更稳。",
+      choices: {
+        full: "集中资金买更看好的机会",
+        small: "只投入一部分，保留余地",
+        skip: "先保留现金等待新机会",
+        report: "比较两个机会的数据再选",
+      },
+      p: 54,
+      up: 114,
+      down: 91,
+    },
+    {
+      title: "板块已经上涨一段，还可能继续涨",
+      type: "复盘",
+      concept: "概率与结果",
+      strategy: "trend",
+      strategyName: "趋势跟随",
+      lead: "tech",
+      story: "板块已经连续上涨，趋势仍然向上，但价格也比之前贵了。继续上涨和突然回落都有可能。",
+      fact: "跟随趋势可能继续获利，也要承担高位回落；没有唯一正确答案。",
+      choices: {
+        full: "继续看涨，投入较多",
+        small: "跟随趋势，但控制仓位",
+        skip: "价格偏高，先不追",
+        report: "先看上涨是否有数据支持",
+      },
+      p: 53,
+      up: 115,
+      down: 89,
+    },
+  ];
+  function rand(seed) {
+    let n = seed >>> 0;
+    n ^= n << 13;
+    n ^= n >>> 17;
+    n ^= n << 5;
+    return (n >>> 0) / 4294967296;
+  }
+  function fresh(name, save = false, goal = "探索基础", initial = CONFIG.initial, seed = Date.now() >>> 0) {
+    return {
+      schema: 2,
+      id: "run-" + seed,
+      seed,
+      version: 0,
+      name: (String(name).trim().slice(0, 12) || "玩家").replace(/总+$/, "") || "玩家",
+      save,
+      goal,
+      initial,
+      balance: initial,
+      round: 0,
+      season: 1,
+      career: null,
+      careerHistory: [],
+      phase: "ready",
+      event: null,
+      draft: null,
+      ledger: [],
+      xp: 0,
+      evidence: [],
+      corrections: {},
+      profileVersion: 1,
+      lessons: [],
+      quiz: [],
+      knowledgeAttempts: [],
+      knowledgeUnlocks: {},
+      chats: [],
+      npc: 0,
+      prompted: [],
+      resourceFeedback: [],
+      cg: "idle",
+    };
+  }
+  function eventFor(s) {
+    const season = s.season || 1,
+      index = s.round === 0 ? 0 : (((s.seed % 5) + s.round + season - 2) % 5) + 1;
+    const f = families[index],
+      roll = rand(s.seed + s.round + season * 997 + 99),
+      rarity = roll < 0.5 ? "R" : roll < 0.85 ? "SR" : "SSR";
+    const factor = { R: 2, SR: 5, SSR: 8 }[rarity],
+      amount = 1000 * factor;
+    const e = {
+      ...f,
+      id: s.id + "-s" + season + "-e" + s.round,
+      version: 1,
+      rule: CONFIG.rule,
+      seed: (s.seed + s.round * 7919 + season * 997 + 17) >>> 0,
+      p: f.p,
+      amount,
+      fee: Math.ceil(amount / 100),
+      report: 50,
+      rarity,
+      source: "Mock 参数组合",
+    };
+    validate(e);
+    return e;
+  }
+  function validate(e) {
+    if (!Number.isInteger(e.p) || e.p < 0 || e.p > 100 || !Number.isInteger(e.amount) || e.amount < 1 || e.amount > 10000 || !Number.isInteger(e.fee) || e.fee < 0 || e.up < 0 || e.up > 200 || e.down < 0 || e.down > 200 || !["research", "defense", "trend", "value"].includes(e.strategy) || !people.some((p) => p.id === e.lead) || !e.strategyName) throw Error("事件规则校验失败");
+    return true;
+  }
+  function draw(s) {
+    if (s.phase !== "ready") return s.event;
+    s.event = eventFor(s);
+    s.phase = "event";
+    s.version++;
+    s.draft = null;
+    return s.event;
+  }
+  function spec(e, action, amount) {
+    if (action === "skip") return { action, amount: 0, fee: 0, report: 0 };
+    if (action === "report") return { action, amount: 0, fee: 0, report: 50 };
+    if (!["small", "full", "custom"].includes(action)) throw Error("不支持的行动");
+    const a = amount === undefined ? (action === "small" ? Math.floor(e.amount / 2) : e.amount) : amount;
+    if (!Number.isInteger(a) || a < 1 || a > e.amount) throw Error("请输入 1–" + e.amount + " 的整数投入");
+    return { action, amount: a, fee: Math.ceil(a / 100), report: 0 };
+  }
+  function gameDay(s) {
+    return Math.floor(s.round / CONFIG.roundsPerDay) + 1;
+  }
+  function spendingLocked(s) {
+    const day = gameDay(s);
+    return Boolean(s.spendingLockDay === day || (s.spendingWarning && day === 1));
+  }
+  function proposal(s, action, amount, reason = "") {
+    if (s.phase !== "event") throw Error("当前无法提交行动");
+    if (spendingLocked(s) && ["full", "small", "custom"].includes(action)) throw Error("今天投入过猛，今天剩余投资选项已进入资金纪律限制");
+    const a = spec(s.event, action, amount);
+    if (a.amount + a.fee + a.report > s.balance) throw Error("可用现金不足，请选择较小金额或不投资");
+    return {
+      ...a,
+      id: s.event.id,
+      eventVersion: s.event.version,
+      reason: String(reason).slice(0, 300),
+      key: s.event.id + "-settle",
+    };
+  }
+  function replay(e, a) {
+    validate(e);
+    const win = rand(e.seed) < e.p / 100;
+    const credit = a.amount ? Math.floor((a.amount * (win ? e.up : e.down)) / 100) : 0;
+    return {
+      debit: a.amount + a.fee + a.report,
+      credit,
+      win,
+      delta: credit - a.amount - a.fee - a.report,
+    };
+  }
+  function evidence(s, dimension, value, source = "observed_action", phase = "before_learning", prompted = false, eventKey) {
+    const key = eventKey || s.event?.id || "intro";
+    if (s.evidence.some((x) => x.eventId === key && x.dimension === dimension && x.value === value)) return false;
+    s.evidence.push({
+      id: "ev-" + (s.evidence.length + 1),
+      eventId: key,
+      family: s.event?.type || "入场",
+      dimension,
+      value,
+      source,
+      phase,
+      prompted,
+      rule: CONFIG.rule,
+    });
+    return true;
+  }
+  function observe(s, kind, text, prompted = false) {
+    const names = {
+      risk: "核对风险与退出边界",
+      tech: "核对指标与验证依据",
+      finance: "核对资金占用和备用金",
+      ai: "解释决策理由",
+    };
+    if (!names[kind]) return;
+    const fresh = evidence(s, kind, names[kind], "observed_action", s.lessons.includes(s.event?.concept) ? "after_learning" : "before_learning", prompted);
+    if (fresh) {
+      s.xp += 5;
+    }
+  }
+  function settle(s, a) {
+    const previous = s.ledger.find((x) => x.idempotencyKey === a.key);
+    if (previous) return previous;
+    if (s.phase !== "event" || a.id !== s.event.id || a.eventVersion !== s.event.version) throw Error("行动已过期，请重新确认");
+    const verified = proposal(s, a.action, a.amount || undefined, a.reason);
+    if (verified.amount !== a.amount || verified.fee !== a.fee || verified.report !== a.report) throw Error("草案参数无效");
+    const r = replay(s.event, a),
+      before = s.balance,
+      attribute = a.amount ? s.event.strategy : attributes[a.action],
+      debit = a.amount + a.fee + a.report,
+      day = gameDay(s),
+      ratio = a.amount / Math.max(1, before),
+      risk = a.report ? "中低" : !a.amount ? "低" : ratio >= 0.5 ? "高" : ratio >= 0.2 ? "中" : "低",
+      moneyStyle = a.report ? "先买信息" : !a.amount ? "保留现金" : ratio >= 0.5 ? "集中投入" : ratio >= 0.2 ? "分批尝试" : "小额试水",
+      decisionStyle =
+        {
+          full: "自主定额投入",
+          small: "自主定额投入",
+          custom: "自主定额投入",
+          skip: "风险优先",
+          report: "证据优先",
+        }[a.action] || "自定义";
+    const entry = {
+      ledgerEntryId: "l-" + s.ledger.length,
+      runId: s.id,
+      eventId: a.id,
+      actionId: a.action,
+      attribute,
+      idempotencyKey: a.key,
+      balanceBefore: before,
+      balanceAfter: before - debit,
+      ...r,
+      amount: a.amount,
+      fee: a.fee,
+      report: a.report,
+      dueDay: a.amount ? day + 1 : day,
+      status: a.amount ? "pending" : "settled",
+      ruleVersion: CONFIG.rule,
+      event: JSON.parse(JSON.stringify(s.event)),
+      proposal: { ...a },
+    };
+    s.ledger.push(entry);
+    s.balance = entry.balanceAfter;
+    if (day === 1 && s.ledger.filter((x) => x.event && Math.floor((Number(x.eventId.match(/e(\d+)$/)?.[1]) || 0) / CONFIG.roundsPerDay) + 1 === 1).reduce((n, x) => n + x.debit, 0) > s.initial * 0.6) s.spendingLockDay = day;
+    s.xp += CONFIG.xpPerEvent;
+    if (a.reason.trim().length >= 4) observe(s, "ai", a.reason, false);
+    evidence(s, "allocation", Math.round((a.amount / Math.max(1, Math.abs(before))) * 100) + "% 投入；可用现金 " + s.balance + " 币", "observed_action", "during", false);
+    evidence(s, "risk_appetite", risk, "observed_action", "during", false);
+    evidence(s, "money_style", moneyStyle, "observed_action", "during", false);
+    evidence(s, "decision_style", decisionStyle, "observed_action", "during", false);
+    if (attribute) evidence(s, "attribute", attribute, "observed_action", "during", false);
+    evidence(s, "strategy", s.event.strategy + ":" + (a.amount ? "follow" : a.report ? "study" : "pass"), "observed_action", "during", false);
+    s.phase = "result";
+    s.draft = null;
+    s.version++;
+    return entry;
+  }
+  function resolveDue(s, day = CONFIG.days + 1) {
+    const resolved = [];
+    for (const e of s.ledger)
+      if (e.status === "pending" && e.dueDay <= day) {
+        s.balance += e.credit;
+        e.status = "settled";
+        e.settledDay = day;
+        e.balanceAfterReturn = s.balance;
+        resolved.push(e);
+      }
+    s.lastSettlement = resolved.map((e) => ({
+      eventId: e.eventId,
+      credit: e.credit,
+      delta: e.delta,
+    }));
+    s.bankrupt = s.balance < 0;
+    return resolved;
+  }
+  function next(s) {
+    if (s.phase !== "result") return;
+    s.round++;
+    s.event = null;
+    s.draft = null;
+    s.prompted = [];
+    s.cg = "idle";
+    if (s.round >= CONFIG.rounds) {
+      resolveDue(s, CONFIG.days + 1);
+      s.phase = s.bankrupt ? "bankrupt" : "finalReport";
+    } else s.phase = s.round % CONFIG.roundsPerDay === 0 ? "daybreak" : "ready";
+    s.version++;
+  }
+  function startCareer(s, career) {
+    if (!["trend", "value", "defense", "research", "chairman"].includes(career)) throw Error("职业不存在");
+    s.career = career;
+    s.careerHistory ||= [];
+    s.careerHistory.push({
+      career,
+      season: s.season || 1,
+      evidenceCount: s.evidence.length,
+      balance: s.balance,
+    });
+    s.season = (s.season || 1) + 1;
+    s.round = 0;
+    s.phase = "ready";
+    s.event = null;
+    s.draft = null;
+    s.view = "city";
+    s.bankrupt = false;
+    delete s.spendingLockDay;
+    delete s.spendingWarning;
+    s.version++;
+    evidence(s, "career", career, "user_choice", "after_assessment", false, "career-s" + s.season);
+    return s;
+  }
+  function startDay(s) {
+    if (s.phase !== "daybreak") return;
+    resolveDue(s, Math.floor(s.round / CONFIG.roundsPerDay) + 1);
+    s.phase = s.bankrupt ? "bankrupt" : "ready";
+    s.view = "city";
+    s.version++;
+  }
+  function claims(s) {
+    return ["risk", "tech", "finance", "ai"].map((id) => {
+      const ev = s.evidence.filter((e) => e.dimension === id);
+      return {
+        id,
+        label: people.find((p) => p.id === id).dimension,
+        events: new Set(ev.map((e) => e.eventId)).size,
+        evidence: ev,
+        status: s.corrections[id] || (ev.length ? "candidate" : "unknown"),
+      };
+    });
+  }
+  function correct(s, id, status) {
+    if (!["confirmed", "rejected", "roleplay", "candidate"].includes(status) || !people.some((p) => p.id === id)) throw Error("无效纠正");
+    s.corrections[id] = status;
+    s.profileVersion++;
+  }
+  function parse(s, text) {
+    const t = String(text).trim();
+    if (!t) return { message: "请说说想法，或者直接选择下方方案。" };
+    if (/全仓|借|杠杆|修改余额|充值/.test(t))
+      return {
+        message: "本轮只支持卡面内的无杠杆试验。请选择观察、报告或额度内投入。",
+      };
+    if (/不投|观望|观察|跳过/.test(t)) return { action: "skip" };
+    if (/买.*报告|购买.*数据|查报告/.test(t)) return { action: "report" };
+    if (/投入|投资|试试|试投/.test(t)) {
+      const n = t.match(/[-+]?\d+(?:\.\d+)?/);
+      if (!n)
+        return {
+          message: "请给出具体整数金额，如“投入 500”。我会先出确认单，不会自动扣币。",
+        };
+      return { action: "custom", amount: Number(n[0]) };
+    }
+    if (/风险|回撤|止损|退出/.test(t)) return { kind: "risk" };
+    if (/指标|数据|样本|回测|验证/.test(t)) return { kind: "tech" };
+    if (/费用|资金|仓位|现金|占用|备用/.test(t)) return { kind: "finance" };
+    return {
+      message: "我理解你想讨论这个情境。Mock 版支持询问风险、指标、费用，或输入“投入 500”“买报告”“观察”。详细理由也可写在决策说明中。",
+    };
+  }
+  const API = {
+    CONFIG,
+    attributes,
+    people,
+    families,
+    rand,
+    fresh,
+    eventFor,
+    validate,
+    draw,
+    spec,
+    gameDay,
+    spendingLocked,
+    proposal,
+    replay,
+    settle,
+    resolveDue,
+    next,
+    startCareer,
+    startDay,
+    observe,
+    evidence,
+    claims,
+    correct,
+    parse,
+  };
+  if (typeof module !== "undefined") module.exports = API;
+  else root.Game = API;
+})(typeof window === "undefined" ? globalThis : window);
