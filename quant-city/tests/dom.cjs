@@ -39,6 +39,8 @@ const q = (s) => w.document.querySelector(s),
   };
 (async () => {
   assert.ok(q("[data-do=askName]"));
+  assert.ok(q(".opening .vn-character"), "gameplay explanation should be integrated with the character portrait");
+  assert.match(q(".opening .vn-dialogue").textContent, /小平层做成摩天集团/);
   assert.equal(q(".game-dock"), null);
   click("[data-do=askName]");
   submit("#start");
@@ -116,7 +118,7 @@ const q = (s) => w.document.querySelector(s),
   assert.equal(state().city.cycle, 1);
   assert.equal(state().round, 1);
   assert.equal(q(".city-day-status"), null);
-  assert.ok(q("[data-do=cycle]").textContent.includes("今日已领取"));
+  assert.ok(q("[data-do=cycle]").textContent.includes("今日已结算"));
   assert.ok(q("[data-do=cycle]").disabled);
   click("[data-do=cycle]");
   assert.equal(q("#modal").open, false);
